@@ -60,6 +60,42 @@ describe('App', () => {
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'images-to-pdf.pdf');
   });
 
+  it('accepts files dropped on the upload zone', () => {
+    render(<App />);
+
+    const image = new File(['image'], 'dropped-scan.png', { type: 'image/png' });
+    fireEvent.drop(screen.getByLabelText('Image upload drop zone'), {
+      dataTransfer: { files: [image] },
+    });
+
+    expect(screen.getByText('dropped-scan.png')).toBeInTheDocument();
+    expect(screen.getByText('1 source file selected.')).toBeInTheDocument();
+  });
+
+  it('shows the current tool input requirements near the file picker', () => {
+    render(<App />);
+
+    expect(screen.getByText('Drop or choose PNG/JPEG images.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Merge PDFs' }));
+    expect(screen.getByText('Drop or choose at least two PDF files.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign PDF' }));
+    expect(screen.getByText('Drop or choose one PDF file.')).toBeInTheDocument();
+  });
+
+  it('disables processing and explains why when the selected files do not fit the tool', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Merge PDFs' }));
+    fireEvent.change(screen.getByLabelText('Select PDFs'), {
+      target: { files: [new File(['pdf'], 'only-one.pdf', { type: 'application/pdf' })] },
+    });
+
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeDisabled();
+    expect(screen.getByText('Add at least two PDF files to merge.')).toBeInTheDocument();
+  });
+
   it('shows the output filename and download destination after processing', async () => {
     render(<App />);
 
@@ -139,7 +175,7 @@ describe('App', () => {
     render(<App />);
 
     fireEvent.change(screen.getByLabelText('Select images'), {
-      target: { files: [new File(['notes'], 'notes.txt', { type: 'text/plain' })] },
+      target: { files: [new File([new Uint8Array(26 * 1024 * 1024)], 'large.png', { type: 'image/png' })] },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
 

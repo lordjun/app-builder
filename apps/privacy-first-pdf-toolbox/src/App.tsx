@@ -36,6 +36,36 @@ type SaveResult = {
   filename: string;
 };
 
+const TOOL_INPUTS: Record<Tool, {
+  accept: string;
+  dropZoneLabel: string;
+  multiple: boolean;
+  requirement: string;
+  selectLabel: string;
+}> = {
+  images: {
+    accept: 'image/png,image/jpeg',
+    dropZoneLabel: 'Image upload drop zone',
+    multiple: true,
+    requirement: 'Drop or choose PNG/JPEG images.',
+    selectLabel: 'Select images',
+  },
+  merge: {
+    accept: 'application/pdf',
+    dropZoneLabel: 'PDF merge upload drop zone',
+    multiple: true,
+    requirement: 'Drop or choose at least two PDF files.',
+    selectLabel: 'Select PDFs',
+  },
+  sign: {
+    accept: 'application/pdf',
+    dropZoneLabel: 'PDF signing upload drop zone',
+    multiple: false,
+    requirement: 'Drop or choose one PDF file.',
+    selectLabel: 'Select PDF',
+  },
+};
+
 export default function App() {
   const [tool, setTool] = useState<Tool>('images');
   const [message, setMessage] = useState('Choose a tool to start.');
@@ -44,6 +74,7 @@ export default function App() {
   const [hasHandwrittenSignature, setHasHandwrittenSignature] = useState(false);
   const [hasCompletedOutput, setHasCompletedOutput] = useState(false);
   const [isDrawingSignature, setIsDrawingSignature] = useState(false);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [outputFilename, setOutputFilename] = useState(DEFAULT_OUTPUT_FILENAMES.images);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -52,6 +83,9 @@ export default function App() {
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const supportsDirectoryPicker = typeof window !== 'undefined' && 'showDirectoryPicker' in window;
+  const inputConfig = TOOL_INPUTS[tool];
+  const selectedFileProblem = getSelectedFileProblem(tool, selectedFiles);
+  const canStartProcessing = selectedFiles.length > 0 && !selectedFileProblem && !isProcessing;
 
   function changeTool(nextTool: Tool) {
     setTool(nextTool);
@@ -61,11 +95,17 @@ export default function App() {
     setMessage('Choose source files, then start processing.');
   }
 
-  function selectFiles(files: FileList | null) {
+  function selectFiles(files: FileList | File[] | null) {
     const selected = Array.from(files ?? []);
     setSelectedFiles(selected);
     setHasCompletedOutput(false);
     setMessage(selected.length > 0 ? `${selected.length} source file${selected.length === 1 ? '' : 's'} selected.` : 'Choose source files, then start processing.');
+  }
+
+  function handleUploadDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingFiles(false);
+    selectFiles(event.dataTransfer.files);
   }
 
   function removeFile(fileIndex: number) {
@@ -319,6 +359,28 @@ export default function App() {
     setMessage(`Check your files. ${errors.join(' ')} Choose different files and try again.`);
   }
 
+  const filePicker = (
+    <div
+      aria-label={inputConfig.dropZoneLabel}
+      className={isDraggingFiles ? 'upload-zone drag-active' : 'upload-zone'}
+      onDragEnter={() => setIsDraggingFiles(true)}
+      onDragLeave={() => setIsDraggingFiles(false)}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={handleUploadDrop}
+    >
+      <p className="input-requirement">{inputConfig.requirement}</p>
+      <label className="file-picker">
+        {inputConfig.selectLabel}
+        <input
+          type="file"
+          accept={inputConfig.accept}
+          multiple={inputConfig.multiple}
+          onChange={(event) => selectFiles(event.currentTarget.files)}
+        />
+      </label>
+    </div>
+  );
+
   return (
     <main className="app-shell">
       <section className="hero-panel" aria-labelledby="app-title">
@@ -350,18 +412,7 @@ export default function App() {
           )}
           <span className="destination-label">{saveDirectory ? 'Custom folder selected' : 'No custom folder selected'}</span>
         </div>
-        {tool === 'images' && (
-          <label className="file-picker">
-            Select images
-            <input type="file" accept="image/png,image/jpeg" multiple onChange={(event) => selectFiles(event.currentTarget.files)} />
-          </label>
-        )}
-        {tool === 'merge' && (
-          <label className="file-picker">
-            Select PDFs
-            <input type="file" accept="application/pdf" multiple onChange={(event) => selectFiles(event.currentTarget.files)} />
-          </label>
-        )}
+        {tool !== 'sign' && filePicker}
         {tool === 'sign' && (
           <div className="signing-panel">
             <label>
@@ -427,10 +478,7 @@ export default function App() {
                 Top left
               </label>
             </fieldset>
-            <label className="file-picker">
-              Select PDF
-              <input type="file" accept="application/pdf" onChange={(event) => selectFiles(event.currentTarget.files)} />
-            </label>
+            {filePicker}
           </div>
         )}
         <label className="filename-field">
@@ -479,9 +527,10 @@ export default function App() {
             </ol>
           </section>
         )}
-        <button className="primary-button" type="button" disabled={selectedFiles.length === 0 || isProcessing} onClick={() => void runCurrentTool()}>
+        <button className="primary-button" type="button" disabled={!canStartProcessing} onClick={() => void runCurrentTool()}>
           {isProcessing ? 'Processing...' : 'Start processing'}
         </button>
+        {selectedFileProblem && <p className="input-warning">{selectedFileProblem}</p>}
         <p className="status">{message}</p>
         {hasCompletedOutput && (
           <button className="secondary-button follow-up-button" type="button" onClick={resetCurrentBatch}>
@@ -507,6 +556,32 @@ function formatFileSize(size: number): string {
   }
 
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getSelectedFileProblem(tool: Tool, files: File[]): string | null {
+  if (files.length === 0) {
+    return null;
+  }
+
+  if (tool === 'images') {
+    return files.every((file) => file.type === 'image/png' || file.type === 'image/jpeg')
+      ? null
+      : 'Use PNG or JPEG image files for this tool.';
+  }
+
+  if (tool === 'merge') {
+    if (!files.every((file) => file.type === 'application/pdf')) {
+      return 'Use PDF files for this tool.';
+    }
+
+    return files.length >= 2 ? null : 'Add at least two PDF files to merge.';
+  }
+
+  if (!files.every((file) => file.type === 'application/pdf')) {
+    return 'Use one PDF file for signing.';
+  }
+
+  return files.length === 1 ? null : 'Keep one PDF file for signing.';
 }
 
 function getCanvasPoint(canvas: HTMLCanvasElement, event: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } {
