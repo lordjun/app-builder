@@ -60,6 +60,58 @@ describe('App', () => {
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'images-to-pdf.pdf');
   });
 
+  it('shows the output filename and download destination after processing', async () => {
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Select images'), {
+      target: { files: [new File(['image'], 'scan.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    expect(await screen.findByText(/Saved images-to-pdf\.pdf through Downloads/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Process another batch' })).toBeInTheDocument();
+  });
+
+  it('clears completed files when starting another batch', async () => {
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Select images'), {
+      target: { files: [new File(['image'], 'scan.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Process another batch' }));
+
+    expect(screen.queryByText('scan.png')).not.toBeInTheDocument();
+    expect(screen.getByText('Choose source files, then start processing.')).toBeInTheDocument();
+  });
+
+  it('shows the selected folder destination after processing', async () => {
+    const writable = {
+      close: vi.fn(async () => undefined),
+      write: vi.fn(async () => undefined),
+    };
+    const directoryHandle = {
+      getFileHandle: vi.fn(async () => ({
+        createWritable: vi.fn(async () => writable),
+      })),
+    };
+    Object.defineProperty(window, 'showDirectoryPicker', {
+      configurable: true,
+      value: vi.fn(async () => directoryHandle),
+    });
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Choose save folder' }));
+    await waitFor(() => expect(window.showDirectoryPicker).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getByLabelText('Select images'), {
+      target: { files: [new File(['image'], 'scan.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    expect(await screen.findByText(/Saved images-to-pdf\.pdf to the selected folder/i)).toBeInTheDocument();
+    expect(directoryHandle.getFileHandle).toHaveBeenCalledWith('images-to-pdf.pdf', { create: true });
+  });
+
   it('shows processing state and prevents duplicate processing clicks', async () => {
     let finishProcessing: ((bytes: Uint8Array) => void) | undefined;
     vi.mocked(createPdfFromImages).mockImplementationOnce(async () => new Promise<Uint8Array>((resolve) => {

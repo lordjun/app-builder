@@ -31,12 +31,18 @@ type WindowWithDirectoryPicker = Window & {
   showDirectoryPicker?: () => Promise<DirectoryHandle>;
 };
 
+type SaveResult = {
+  destination: 'downloads' | 'selected-folder';
+  filename: string;
+};
+
 export default function App() {
   const [tool, setTool] = useState<Tool>('images');
   const [message, setMessage] = useState('Choose a tool to start.');
   const [signature, setSignature] = useState('');
   const [signaturePosition, setSignaturePosition] = useState<SignaturePosition>('bottom-right');
   const [hasHandwrittenSignature, setHasHandwrittenSignature] = useState(false);
+  const [hasCompletedOutput, setHasCompletedOutput] = useState(false);
   const [isDrawingSignature, setIsDrawingSignature] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [outputFilename, setOutputFilename] = useState(DEFAULT_OUTPUT_FILENAMES.images);
@@ -50,6 +56,7 @@ export default function App() {
   function changeTool(nextTool: Tool) {
     setTool(nextTool);
     setSelectedFiles([]);
+    setHasCompletedOutput(false);
     setOutputFilename(DEFAULT_OUTPUT_FILENAMES[nextTool]);
     setMessage('Choose source files, then start processing.');
   }
@@ -57,12 +64,14 @@ export default function App() {
   function selectFiles(files: FileList | null) {
     const selected = Array.from(files ?? []);
     setSelectedFiles(selected);
+    setHasCompletedOutput(false);
     setMessage(selected.length > 0 ? `${selected.length} source file${selected.length === 1 ? '' : 's'} selected.` : 'Choose source files, then start processing.');
   }
 
   function removeFile(fileIndex: number) {
     setSelectedFiles((files) => {
       const nextFiles = files.filter((_, index) => index !== fileIndex);
+      setHasCompletedOutput(false);
       setMessage(nextFiles.length > 0 ? `${nextFiles.length} source file${nextFiles.length === 1 ? '' : 's'} selected.` : 'Choose source files, then start processing.');
       return nextFiles;
     });
@@ -107,6 +116,7 @@ export default function App() {
     }
 
     processingRef.current = true;
+    setHasCompletedOutput(false);
     setIsProcessing(true);
 
     try {
@@ -143,8 +153,8 @@ export default function App() {
 
       const { createPdfFromImages } = await import('./pdf/imageToPdf');
       const bytes = await createPdfFromImages(imageFiles);
-      await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.images);
-      setMessage(`Created PDF from ${imageFiles.length} image file${imageFiles.length === 1 ? '' : 's'}.`);
+      const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.images);
+      setCompletedMessage(`Created PDF from ${imageFiles.length} image file${imageFiles.length === 1 ? '' : 's'}.`, saveResult);
     });
   }
 
@@ -164,8 +174,8 @@ export default function App() {
 
       const { mergePdfs } = await import('./pdf/mergePdfs');
       const bytes = await mergePdfs(pdfFiles);
-      await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.merge);
-      setMessage(`Merged ${pdfFiles.length} PDF files.`);
+      const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.merge);
+      setCompletedMessage(`Merged ${pdfFiles.length} PDF files.`, saveResult);
     });
   }
 
@@ -195,8 +205,8 @@ export default function App() {
             text: signature,
             position: signaturePosition,
           });
-      await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.sign);
-      setMessage('Signed the PDF on the first page.');
+      const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.sign);
+      setCompletedMessage('Signed the PDF on the first page.', saveResult);
     });
   }
 
@@ -262,17 +272,24 @@ export default function App() {
     return new Uint8Array(await blob.arrayBuffer());
   }
 
-  async function saveOutput(bytes: Uint8Array, filename: string) {
+  async function saveOutput(bytes: Uint8Array, filename: string): Promise<SaveResult> {
     const normalizedFilename = normalizePdfFilename(outputFilename, filename);
     if (!saveDirectory) {
       downloadPdf(bytes, normalizedFilename);
-      return;
+      return {
+        destination: 'downloads',
+        filename: normalizedFilename,
+      };
     }
 
     const fileHandle = await saveDirectory.getFileHandle(normalizedFilename, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(new Blob([toArrayBuffer(bytes)], { type: 'application/pdf' }));
     await writable.close();
+    return {
+      destination: 'selected-folder',
+      filename: normalizedFilename,
+    };
   }
 
   async function runSafely(action: () => Promise<void>) {
@@ -280,11 +297,25 @@ export default function App() {
       await action();
     } catch (error) {
       const detail = error instanceof Error ? error.message : 'The selected file could not be processed.';
+      setHasCompletedOutput(false);
       setMessage(`Processing failed. ${detail} Try again with the same files, or choose different files.`);
     }
   }
 
+  function resetCurrentBatch() {
+    setSelectedFiles([]);
+    setHasCompletedOutput(false);
+    setMessage('Choose source files, then start processing.');
+  }
+
+  function setCompletedMessage(summary: string, saveResult: SaveResult) {
+    setHasCompletedOutput(true);
+    const destination = saveResult.destination === 'downloads' ? 'through Downloads' : 'to the selected folder';
+    setMessage(`${summary} Saved ${saveResult.filename} ${destination}.`);
+  }
+
   function setValidationErrorMessage(errors: string[]) {
+    setHasCompletedOutput(false);
     setMessage(`Check your files. ${errors.join(' ')} Choose different files and try again.`);
   }
 
@@ -452,6 +483,11 @@ export default function App() {
           {isProcessing ? 'Processing...' : 'Start processing'}
         </button>
         <p className="status">{message}</p>
+        {hasCompletedOutput && (
+          <button className="secondary-button follow-up-button" type="button" onClick={resetCurrentBatch}>
+            Process another batch
+          </button>
+        )}
       </section>
     </main>
   );

@@ -296,6 +296,10 @@ h1 {
   color: #50616d;
 }
 
+.follow-up-button {
+  margin-top: 12px;
+}
+
 @media (max-width: 720px) {
   .hero-topline {
     align-items: flex-start;
