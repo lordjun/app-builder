@@ -131,7 +131,7 @@ export default function App() {
     await runSafely(async () => {
       const validation = validateFiles(files);
       if (!validation.valid) {
-        setMessage(validation.errors.join(' '));
+        setValidationErrorMessage(validation.errors);
         return;
       }
 
@@ -152,7 +152,7 @@ export default function App() {
     await runSafely(async () => {
       const validation = validateFiles(files);
       if (!validation.valid) {
-        setMessage(validation.errors.join(' '));
+        setValidationErrorMessage(validation.errors);
         return;
       }
 
@@ -173,7 +173,7 @@ export default function App() {
     await runSafely(async () => {
       const validation = validateFiles(files);
       if (!validation.valid) {
-        setMessage(validation.errors.join(' '));
+        setValidationErrorMessage(validation.errors);
         return;
       }
 
@@ -279,8 +279,13 @@ export default function App() {
     try {
       await action();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'The selected file could not be processed.');
+      const detail = error instanceof Error ? error.message : 'The selected file could not be processed.';
+      setMessage(`Processing failed. ${detail} Try again with the same files, or choose different files.`);
     }
+  }
+
+  function setValidationErrorMessage(errors: string[]) {
+    setMessage(`Check your files. ${errors.join(' ')} Choose different files and try again.`);
   }
 
   return (

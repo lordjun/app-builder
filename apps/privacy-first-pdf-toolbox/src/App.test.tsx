@@ -83,6 +83,31 @@ describe('App', () => {
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([7, 8, 9]), 'images-to-pdf.pdf');
   });
 
+  it('explains how to recover from file validation errors', async () => {
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Select images'), {
+      target: { files: [new File(['notes'], 'notes.txt', { type: 'text/plain' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    expect(await screen.findByText(/Check your files/i)).toBeInTheDocument();
+    expect(screen.getByText(/Choose different files and try again/i)).toBeInTheDocument();
+  });
+
+  it('explains how to recover from PDF processing errors', async () => {
+    vi.mocked(createPdfFromImages).mockRejectedValueOnce(new Error('Image decoding failed.'));
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Select images'), {
+      target: { files: [new File(['image'], 'scan.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    expect(await screen.findByText(/Processing failed/i)).toBeInTheDocument();
+    expect(screen.getByText(/Try again with the same files, or choose different files/i)).toBeInTheDocument();
+  });
+
   it('lets supported browsers choose a save folder before processing', async () => {
     const directoryHandle = {};
     Object.defineProperty(window, 'showDirectoryPicker', {
