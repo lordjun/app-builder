@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { downloadPdf } from './pdf/download';
 import { validateFiles } from './pdf/fileValidation';
 import { createPdfFromImages } from './pdf/imageToPdf';
 import { mergePdfs } from './pdf/mergePdfs';
-import { signPdf } from './pdf/signPdf';
+import { type SignaturePosition, signPdf } from './pdf/signPdf';
 
 type Tool = 'images' | 'merge' | 'sign';
 
@@ -28,8 +28,12 @@ export default function App() {
   const [tool, setTool] = useState<Tool>('images');
   const [message, setMessage] = useState('Choose a tool to start.');
   const [signature, setSignature] = useState('');
+  const [signaturePosition, setSignaturePosition] = useState<SignaturePosition>('bottom-right');
+  const [hasHandwrittenSignature, setHasHandwrittenSignature] = useState(false);
+  const [isDrawingSignature, setIsDrawingSignature] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [saveDirectory, setSaveDirectory] = useState<DirectoryHandle | null>(null);
+  const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const supportsDirectoryPicker = typeof window !== 'undefined' && 'showDirectoryPicker' in window;
 
@@ -154,10 +158,82 @@ export default function App() {
         return;
       }
 
-      const bytes = await signPdf(pdfFile, signature);
+      const bytes = await signPdf(pdfFile, hasHandwrittenSignature
+        ? {
+            type: 'image',
+            imageBytes: await getSignatureCanvasBytes(),
+            position: signaturePosition,
+          }
+        : {
+            type: 'text',
+            text: signature,
+            position: signaturePosition,
+          });
       await saveOutput(bytes, 'signed.pdf');
       setMessage('Signed the PDF on the first page.');
     });
+  }
+
+  function startSignatureStroke(event: React.PointerEvent<HTMLCanvasElement>) {
+    const canvas = signatureCanvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) {
+      return;
+    }
+
+    const { x, y } = getCanvasPoint(canvas, event);
+    context.strokeStyle = '#172026';
+    context.lineWidth = 3;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.beginPath();
+    context.moveTo(x, y);
+    setIsDrawingSignature(true);
+    setHasHandwrittenSignature(true);
+  }
+
+  function continueSignatureStroke(event: React.PointerEvent<HTMLCanvasElement>) {
+    if (!isDrawingSignature) {
+      return;
+    }
+
+    const canvas = signatureCanvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) {
+      return;
+    }
+
+    const { x, y } = getCanvasPoint(canvas, event);
+    context.lineTo(x, y);
+    context.stroke();
+  }
+
+  function endSignatureStroke() {
+    setIsDrawingSignature(false);
+  }
+
+  function clearSignatureCanvas() {
+    const canvas = signatureCanvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (canvas && context) {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    setHasHandwrittenSignature(false);
+    setMessage('Signature pad cleared.');
+  }
+
+  async function getSignatureCanvasBytes(): Promise<Uint8Array> {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) {
+      throw new Error('Signature pad is not available.');
+    }
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) {
+      throw new Error('Signature image could not be created.');
+    }
+
+    return new Uint8Array(await blob.arrayBuffer());
   }
 
   async function saveOutput(bytes: Uint8Array, filename: string) {
@@ -224,6 +300,65 @@ export default function App() {
               Signature text
               <input value={signature} onChange={(event) => setSignature(event.target.value)} aria-label="Signature text" />
             </label>
+            <div className="signature-pad">
+              <canvas
+                aria-label="Handwritten signature pad"
+                className="signature-canvas"
+                height={160}
+                ref={signatureCanvasRef}
+                width={520}
+                onPointerDown={startSignatureStroke}
+                onPointerLeave={endSignatureStroke}
+                onPointerMove={continueSignatureStroke}
+                onPointerUp={endSignatureStroke}
+              />
+              <button className="secondary-button compact-button" type="button" onClick={clearSignatureCanvas}>
+                Clear signature
+              </button>
+            </div>
+            <fieldset className="position-options">
+              <legend>Signature position</legend>
+              <label>
+                <input
+                  checked={signaturePosition === 'bottom-right'}
+                  name="signature-position"
+                  type="radio"
+                  value="bottom-right"
+                  onChange={() => setSignaturePosition('bottom-right')}
+                />
+                Bottom right
+              </label>
+              <label>
+                <input
+                  checked={signaturePosition === 'bottom-left'}
+                  name="signature-position"
+                  type="radio"
+                  value="bottom-left"
+                  onChange={() => setSignaturePosition('bottom-left')}
+                />
+                Bottom left
+              </label>
+              <label>
+                <input
+                  checked={signaturePosition === 'top-right'}
+                  name="signature-position"
+                  type="radio"
+                  value="top-right"
+                  onChange={() => setSignaturePosition('top-right')}
+                />
+                Top right
+              </label>
+              <label>
+                <input
+                  checked={signaturePosition === 'top-left'}
+                  name="signature-position"
+                  type="radio"
+                  value="top-left"
+                  onChange={() => setSignaturePosition('top-left')}
+                />
+                Top left
+              </label>
+            </fieldset>
             <label className="file-picker">
               Select PDF
               <input type="file" accept="application/pdf" onChange={(event) => selectFiles(event.currentTarget.files)} />
@@ -238,7 +373,7 @@ export default function App() {
                 <li className="file-row" key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
                   <div className="file-meta">
                     <span className="file-name">{file.name}</span>
-                    <span className="file-detail">{formatFileSize(file.size)} · {file.type || 'unknown type'}</span>
+                    <span className="file-detail">{formatFileSize(file.size)} | {file.type || 'unknown type'}</span>
                   </div>
                   <div className="file-actions">
                     <button
@@ -291,4 +426,15 @@ function formatFileSize(size: number): string {
   }
 
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getCanvasPoint(canvas: HTMLCanvasElement, event: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
 }

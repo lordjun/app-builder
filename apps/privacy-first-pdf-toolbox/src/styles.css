@@ -139,13 +139,59 @@ h1 {
 .signing-panel {
   display: grid;
   gap: 16px;
-  max-width: 420px;
+  max-width: 560px;
 }
 
 .signing-panel label {
   display: grid;
   gap: 10px;
   font-weight: 700;
+}
+
+.signature-pad {
+  display: grid;
+  gap: 10px;
+}
+
+.signature-canvas {
+  width: 100%;
+  max-width: 520px;
+  height: 160px;
+  border: 1px solid #cfe0da;
+  border-radius: 8px;
+  background: #ffffff;
+  touch-action: none;
+}
+
+.compact-button {
+  justify-self: start;
+}
+
+.position-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  max-width: 520px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #dce3e8;
+  border-radius: 8px;
+}
+
+.position-options legend {
+  padding: 0 6px;
+  color: #50616d;
+  font-weight: 700;
+}
+
+.position-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.position-options input {
+  width: auto;
 }
 
 .selected-files {
@@ -246,5 +292,9 @@ h1 {
 
   .icon-button {
     flex: 1 1 96px;
+  }
+
+  .position-options {
+    grid-template-columns: 1fr;
   }
 }
