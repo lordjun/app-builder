@@ -57,4 +57,34 @@ describe('App', () => {
     await waitFor(() => expect(window.showDirectoryPicker).toHaveBeenCalledTimes(1));
     expect(screen.getByText('Save folder selected.')).toBeInTheDocument();
   });
+
+  it('shows selected files and lets users remove one before processing', () => {
+    render(<App />);
+
+    const first = new File(['first'], 'first.png', { type: 'image/png' });
+    const second = new File(['second'], 'second.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText('Select images'), { target: { files: [first, second] } });
+
+    expect(screen.getByRole('heading', { name: 'Selected files' })).toBeInTheDocument();
+    expect(screen.getByText('first.png')).toBeInTheDocument();
+    expect(screen.getByText('second.png')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove first.png' }));
+
+    expect(screen.queryByText('first.png')).not.toBeInTheDocument();
+    expect(screen.getByText('second.png')).toBeInTheDocument();
+  });
+
+  it('processes files in the user-adjusted order', async () => {
+    render(<App />);
+
+    const first = new File(['first'], 'first.png', { type: 'image/png' });
+    const second = new File(['second'], 'second.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText('Select images'), { target: { files: [first, second] } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move second.png up' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    await waitFor(() => expect(createPdfFromImages).toHaveBeenCalledWith([second, first]));
+  });
 });

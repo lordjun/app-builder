@@ -45,6 +45,27 @@ export default function App() {
     setMessage(selected.length > 0 ? `${selected.length} source file${selected.length === 1 ? '' : 's'} selected.` : 'Choose source files, then start processing.');
   }
 
+  function removeFile(fileIndex: number) {
+    setSelectedFiles((files) => {
+      const nextFiles = files.filter((_, index) => index !== fileIndex);
+      setMessage(nextFiles.length > 0 ? `${nextFiles.length} source file${nextFiles.length === 1 ? '' : 's'} selected.` : 'Choose source files, then start processing.');
+      return nextFiles;
+    });
+  }
+
+  function moveFile(fileIndex: number, direction: -1 | 1) {
+    setSelectedFiles((files) => {
+      const nextIndex = fileIndex + direction;
+      if (nextIndex < 0 || nextIndex >= files.length) {
+        return files;
+      }
+
+      const nextFiles = [...files];
+      [nextFiles[fileIndex], nextFiles[nextIndex]] = [nextFiles[nextIndex], nextFiles[fileIndex]];
+      return nextFiles;
+    });
+  }
+
   async function chooseSaveDirectory() {
     const picker = (window as WindowWithDirectoryPicker).showDirectoryPicker;
     if (!picker) {
@@ -209,6 +230,44 @@ export default function App() {
             </label>
           </div>
         )}
+        {selectedFiles.length > 0 && (
+          <section className="selected-files" aria-labelledby="selected-files-title">
+            <h2 id="selected-files-title">Selected files</h2>
+            <ol className="file-list">
+              {selectedFiles.map((file, index) => (
+                <li className="file-row" key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
+                  <div className="file-meta">
+                    <span className="file-name">{file.name}</span>
+                    <span className="file-detail">{formatFileSize(file.size)} · {file.type || 'unknown type'}</span>
+                  </div>
+                  <div className="file-actions">
+                    <button
+                      className="icon-button"
+                      type="button"
+                      aria-label={`Move ${file.name} up`}
+                      disabled={index === 0}
+                      onClick={() => moveFile(index, -1)}
+                    >
+                      Up
+                    </button>
+                    <button
+                      className="icon-button"
+                      type="button"
+                      aria-label={`Move ${file.name} down`}
+                      disabled={index === selectedFiles.length - 1}
+                      onClick={() => moveFile(index, 1)}
+                    >
+                      Down
+                    </button>
+                    <button className="icon-button danger" type="button" aria-label={`Remove ${file.name}`} onClick={() => removeFile(index)}>
+                      Remove
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
         <button className="primary-button" type="button" disabled={selectedFiles.length === 0} onClick={() => void runCurrentTool()}>
           Start processing
         </button>
@@ -220,4 +279,16 @@ export default function App() {
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+}
+
+function formatFileSize(size: number): string {
+  if (size < 1024) {
+    return `${size} B`;
+  }
+
+  if (size < 1024 * 1024) {
+    return `${(size / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
