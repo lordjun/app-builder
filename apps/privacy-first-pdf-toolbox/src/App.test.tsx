@@ -227,6 +227,18 @@ describe('App', () => {
     expect(screen.getByText('second.png')).toBeInTheDocument();
   });
 
+  it('uses compact file action icons while keeping accessible action names', () => {
+    render(<App />);
+
+    const first = new File(['first'], 'first.png', { type: 'image/png' });
+    const second = new File(['second'], 'second.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText('Select images'), { target: { files: [first, second] } });
+
+    expect(screen.getByRole('button', { name: 'Move second.png up' })).toHaveTextContent('↑');
+    expect(screen.getByRole('button', { name: 'Move first.png down' })).toHaveTextContent('↓');
+    expect(screen.getByRole('button', { name: 'Remove first.png' })).toHaveTextContent('×');
+  });
+
   it('processes files in the user-adjusted order', async () => {
     render(<App />);
 
@@ -270,6 +282,22 @@ describe('App', () => {
       position: 'top-left',
     }));
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([4, 5, 6]), 'signed.pdf');
+  });
+
+  it('requires signature text or handwriting before signing a PDF', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign PDF' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [new File(['pdf'], 'contract.pdf', { type: 'application/pdf' })] },
+    });
+
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeDisabled();
+    expect(screen.getByText('Add signature text or draw a signature.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Signature text'), { target: { value: 'Jane Doe' } });
+
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
   });
 
   it('uses the custom output filename when processing files', async () => {

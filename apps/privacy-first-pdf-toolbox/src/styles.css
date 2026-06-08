@@ -298,14 +298,20 @@ h1 {
 }
 
 .icon-button {
-  min-height: 36px;
+  display: inline-grid;
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  place-items: center;
   border: 1px solid #cfe0da;
   border-radius: 8px;
-  padding: 0 10px;
+  padding: 0;
   background: #ffffff;
   color: #234f44;
   cursor: pointer;
+  font-size: 1.1rem;
   font-weight: 700;
+  line-height: 1;
 }
 
 .danger {
@@ -357,7 +363,7 @@ h1 {
   }
 
   .icon-button {
-    flex: 1 1 96px;
+    flex: 0 0 40px;
   }
 
   .position-options {

@@ -85,7 +85,9 @@ export default function App() {
   const supportsDirectoryPicker = typeof window !== 'undefined' && 'showDirectoryPicker' in window;
   const inputConfig = TOOL_INPUTS[tool];
   const selectedFileProblem = getSelectedFileProblem(tool, selectedFiles);
-  const canStartProcessing = selectedFiles.length > 0 && !selectedFileProblem && !isProcessing;
+  const signatureProblem = selectedFiles.length > 0 ? getSignatureProblem(tool, signature, hasHandwrittenSignature) : null;
+  const startProblem = selectedFileProblem ?? signatureProblem;
+  const canStartProcessing = selectedFiles.length > 0 && !startProblem && !isProcessing;
 
   function changeTool(nextTool: Tool) {
     setTool(nextTool);
@@ -233,6 +235,12 @@ export default function App() {
         return;
       }
 
+      const signatureText = signature.trim();
+      if (!hasHandwrittenSignature && signatureText.length === 0) {
+        setMessage('Add signature text or draw a signature.');
+        return;
+      }
+
       const { signPdf } = await import('./pdf/signPdf');
       const bytes = await signPdf(pdfFile, hasHandwrittenSignature
         ? {
@@ -242,7 +250,7 @@ export default function App() {
           }
         : {
             type: 'text',
-            text: signature,
+            text: signatureText,
             position: signaturePosition,
           });
       const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.sign);
@@ -507,7 +515,7 @@ export default function App() {
                       disabled={index === 0}
                       onClick={() => moveFile(index, -1)}
                     >
-                      Up
+                      <span aria-hidden="true">↑</span>
                     </button>
                     <button
                       className="icon-button"
@@ -516,10 +524,10 @@ export default function App() {
                       disabled={index === selectedFiles.length - 1}
                       onClick={() => moveFile(index, 1)}
                     >
-                      Down
+                      <span aria-hidden="true">↓</span>
                     </button>
                     <button className="icon-button danger" type="button" aria-label={`Remove ${file.name}`} onClick={() => removeFile(index)}>
-                      Remove
+                      <span aria-hidden="true">×</span>
                     </button>
                   </div>
                 </li>
@@ -530,7 +538,7 @@ export default function App() {
         <button className="primary-button" type="button" disabled={!canStartProcessing} onClick={() => void runCurrentTool()}>
           {isProcessing ? 'Processing...' : 'Start processing'}
         </button>
-        {selectedFileProblem && <p className="input-warning">{selectedFileProblem}</p>}
+        {startProblem && <p className="input-warning">{startProblem}</p>}
         <p className="status">{message}</p>
         {hasCompletedOutput && (
           <button className="secondary-button follow-up-button" type="button" onClick={resetCurrentBatch}>
@@ -582,6 +590,14 @@ function getSelectedFileProblem(tool: Tool, files: File[]): string | null {
   }
 
   return files.length === 1 ? null : 'Keep one PDF file for signing.';
+}
+
+function getSignatureProblem(tool: Tool, signature: string, hasHandwrittenSignature: boolean): string | null {
+  if (tool !== 'sign' || hasHandwrittenSignature || signature.trim().length > 0) {
+    return null;
+  }
+
+  return 'Add signature text or draw a signature.';
 }
 
 function getCanvasPoint(canvas: HTMLCanvasElement, event: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } {
