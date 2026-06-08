@@ -60,6 +60,29 @@ describe('App', () => {
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'images-to-pdf.pdf');
   });
 
+  it('shows processing state and prevents duplicate processing clicks', async () => {
+    let finishProcessing: ((bytes: Uint8Array) => void) | undefined;
+    vi.mocked(createPdfFromImages).mockImplementationOnce(async () => new Promise<Uint8Array>((resolve) => {
+      finishProcessing = resolve;
+    }));
+    render(<App />);
+
+    const image = new File(['image'], 'scan.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText('Select images'), { target: { files: [image] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    const processingButton = await screen.findByRole('button', { name: 'Processing...' });
+    expect(processingButton).toBeDisabled();
+
+    fireEvent.click(processingButton);
+    expect(createPdfFromImages).toHaveBeenCalledTimes(1);
+
+    finishProcessing?.(new Uint8Array([7, 8, 9]));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled());
+    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([7, 8, 9]), 'images-to-pdf.pdf');
+  });
+
   it('lets supported browsers choose a save folder before processing', async () => {
     const directoryHandle = {};
     Object.defineProperty(window, 'showDirectoryPicker', {

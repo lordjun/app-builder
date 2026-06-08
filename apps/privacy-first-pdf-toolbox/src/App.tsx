@@ -38,9 +38,11 @@ export default function App() {
   const [signaturePosition, setSignaturePosition] = useState<SignaturePosition>('bottom-right');
   const [hasHandwrittenSignature, setHasHandwrittenSignature] = useState(false);
   const [isDrawingSignature, setIsDrawingSignature] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [outputFilename, setOutputFilename] = useState(DEFAULT_OUTPUT_FILENAMES.images);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [saveDirectory, setSaveDirectory] = useState<DirectoryHandle | null>(null);
+  const processingRef = useRef(false);
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const supportsDirectoryPicker = typeof window !== 'undefined' && 'showDirectoryPicker' in window;
@@ -100,17 +102,29 @@ export default function App() {
   }
 
   async function runCurrentTool() {
-    if (tool === 'images') {
-      await runImages(selectedFiles);
+    if (processingRef.current) {
       return;
     }
 
-    if (tool === 'merge') {
-      await runMerge(selectedFiles);
-      return;
-    }
+    processingRef.current = true;
+    setIsProcessing(true);
 
-    await runSign(selectedFiles);
+    try {
+      if (tool === 'images') {
+        await runImages(selectedFiles);
+        return;
+      }
+
+      if (tool === 'merge') {
+        await runMerge(selectedFiles);
+        return;
+      }
+
+      await runSign(selectedFiles);
+    } finally {
+      processingRef.current = false;
+      setIsProcessing(false);
+    }
   }
 
   async function runImages(files: File[]) {
@@ -429,8 +443,8 @@ export default function App() {
             </ol>
           </section>
         )}
-        <button className="primary-button" type="button" disabled={selectedFiles.length === 0} onClick={() => void runCurrentTool()}>
-          Start processing
+        <button className="primary-button" type="button" disabled={selectedFiles.length === 0 || isProcessing} onClick={() => void runCurrentTool()}>
+          {isProcessing ? 'Processing...' : 'Start processing'}
         </button>
         <p className="status">{message}</p>
       </section>
