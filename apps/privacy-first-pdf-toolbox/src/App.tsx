@@ -3,9 +3,16 @@ import { downloadPdf } from './pdf/download';
 import { validateFiles } from './pdf/fileValidation';
 import { createPdfFromImages } from './pdf/imageToPdf';
 import { mergePdfs } from './pdf/mergePdfs';
+import { normalizePdfFilename } from './pdf/outputFilename';
 import { type SignaturePosition, signPdf } from './pdf/signPdf';
 
 type Tool = 'images' | 'merge' | 'sign';
+
+const DEFAULT_OUTPUT_FILENAMES: Record<Tool, string> = {
+  images: 'images-to-pdf.pdf',
+  merge: 'merged.pdf',
+  sign: 'signed.pdf',
+};
 
 type WritableFile = {
   write: (data: Blob) => Promise<void>;
@@ -31,6 +38,7 @@ export default function App() {
   const [signaturePosition, setSignaturePosition] = useState<SignaturePosition>('bottom-right');
   const [hasHandwrittenSignature, setHasHandwrittenSignature] = useState(false);
   const [isDrawingSignature, setIsDrawingSignature] = useState(false);
+  const [outputFilename, setOutputFilename] = useState(DEFAULT_OUTPUT_FILENAMES.images);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [saveDirectory, setSaveDirectory] = useState<DirectoryHandle | null>(null);
   const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -40,6 +48,7 @@ export default function App() {
   function changeTool(nextTool: Tool) {
     setTool(nextTool);
     setSelectedFiles([]);
+    setOutputFilename(DEFAULT_OUTPUT_FILENAMES[nextTool]);
     setMessage('Choose source files, then start processing.');
   }
 
@@ -119,7 +128,7 @@ export default function App() {
       }
 
       const bytes = await createPdfFromImages(imageFiles);
-      await saveOutput(bytes, 'images-to-pdf.pdf');
+      await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.images);
       setMessage(`Created PDF from ${imageFiles.length} image file${imageFiles.length === 1 ? '' : 's'}.`);
     });
   }
@@ -139,7 +148,7 @@ export default function App() {
       }
 
       const bytes = await mergePdfs(pdfFiles);
-      await saveOutput(bytes, 'merged.pdf');
+      await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.merge);
       setMessage(`Merged ${pdfFiles.length} PDF files.`);
     });
   }
@@ -169,7 +178,7 @@ export default function App() {
             text: signature,
             position: signaturePosition,
           });
-      await saveOutput(bytes, 'signed.pdf');
+      await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.sign);
       setMessage('Signed the PDF on the first page.');
     });
   }
@@ -237,12 +246,13 @@ export default function App() {
   }
 
   async function saveOutput(bytes: Uint8Array, filename: string) {
+    const normalizedFilename = normalizePdfFilename(outputFilename, filename);
     if (!saveDirectory) {
-      downloadPdf(bytes, filename);
+      downloadPdf(bytes, normalizedFilename);
       return;
     }
 
-    const fileHandle = await saveDirectory.getFileHandle(filename, { create: true });
+    const fileHandle = await saveDirectory.getFileHandle(normalizedFilename, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(new Blob([toArrayBuffer(bytes)], { type: 'application/pdf' }));
     await writable.close();
@@ -365,6 +375,14 @@ export default function App() {
             </label>
           </div>
         )}
+        <label className="filename-field">
+          Output filename
+          <input
+            aria-label="Output filename"
+            value={outputFilename}
+            onChange={(event) => setOutputFilename(event.target.value)}
+          />
+        </label>
         {selectedFiles.length > 0 && (
           <section className="selected-files" aria-labelledby="selected-files-title">
             <h2 id="selected-files-title">Selected files</h2>

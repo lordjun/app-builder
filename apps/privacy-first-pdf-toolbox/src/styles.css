@@ -93,9 +93,18 @@ h1 {
 }
 
 .file-picker input,
+.filename-field input,
 .signing-panel input {
   width: 100%;
   box-sizing: border-box;
+}
+
+.filename-field {
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+  margin-top: 18px;
+  font-weight: 700;
 }
 
 .save-row {

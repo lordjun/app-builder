@@ -124,4 +124,16 @@ describe('App', () => {
     }));
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([4, 5, 6]), 'signed.pdf');
   });
+
+  it('uses the custom output filename when processing files', async () => {
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Output filename'), { target: { value: 'client/report:final' } });
+    fireEvent.change(screen.getByLabelText('Select images'), {
+      target: { files: [new File(['image'], 'scan.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    await waitFor(() => expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'client-report-final.pdf'));
+  });
 });
