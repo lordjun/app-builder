@@ -28,11 +28,31 @@ button:disabled {
   margin-bottom: 24px;
 }
 
+.hero-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
 .eyebrow {
-  margin: 0 0 8px;
+  margin: 0;
   color: #2f6f5e;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.feedback-link {
+  color: #234f44;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration-color: #9bbdb2;
+  text-underline-offset: 4px;
+}
+
+.feedback-link:hover {
+  color: #172026;
 }
 
 h1 {
@@ -277,6 +297,11 @@ h1 {
 }
 
 @media (max-width: 720px) {
+  .hero-topline {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .tool-grid {
     grid-template-columns: 1fr;
   }

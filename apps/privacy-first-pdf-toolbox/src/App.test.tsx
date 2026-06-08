@@ -34,6 +34,17 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Sign PDF' })).toBeInTheDocument();
   });
 
+  it('links users to the feedback issue form', () => {
+    render(<App />);
+
+    const feedbackLink = screen.getByRole('link', { name: 'Send feedback' });
+
+    expect(feedbackLink).toHaveAttribute('href', expect.stringContaining('https://github.com/lordjun/app-builder/issues/new'));
+    expect(feedbackLink).toHaveAttribute('href', expect.stringContaining('labels=feedback'));
+    expect(feedbackLink).toHaveAttribute('target', '_blank');
+    expect(feedbackLink).toHaveAttribute('rel', 'noreferrer');
+  });
+
   it('waits for explicit confirmation before processing selected files', async () => {
     render(<App />);
 

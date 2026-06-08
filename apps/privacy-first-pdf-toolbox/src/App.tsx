@@ -14,6 +14,8 @@ const DEFAULT_OUTPUT_FILENAMES: Record<Tool, string> = {
   sign: 'signed.pdf',
 };
 
+const FEEDBACK_URL = 'https://github.com/lordjun/app-builder/issues/new?labels=feedback&title=PDF%20Toolbox%20feedback&body=What%20were%20you%20trying%20to%20do%3F%0A%0AWhat%20went%20wrong%20or%20felt%20unclear%3F%0A%0AWhat%20would%20make%20this%20tool%20worth%20using%20again%3F';
+
 type WritableFile = {
   write: (data: Blob) => Promise<void>;
   close: () => Promise<void>;
@@ -269,7 +271,12 @@ export default function App() {
   return (
     <main className="app-shell">
       <section className="hero-panel" aria-labelledby="app-title">
-        <p className="eyebrow">Local-first document tools</p>
+        <div className="hero-topline">
+          <p className="eyebrow">Local-first document tools</p>
+          <a className="feedback-link" href={FEEDBACK_URL} target="_blank" rel="noreferrer">
+            Send feedback
+          </a>
+        </div>
         <h1 id="app-title">Privacy PDF Toolbox</h1>
         <p className="lede">Create, merge, and sign PDFs in your browser. Files stay local by default.</p>
       </section>
