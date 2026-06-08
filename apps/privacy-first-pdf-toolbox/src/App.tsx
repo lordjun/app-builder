@@ -1,10 +1,8 @@
 import { useRef, useState } from 'react';
 import { downloadPdf } from './pdf/download';
 import { validateFiles } from './pdf/fileValidation';
-import { createPdfFromImages } from './pdf/imageToPdf';
-import { mergePdfs } from './pdf/mergePdfs';
 import { normalizePdfFilename } from './pdf/outputFilename';
-import { type SignaturePosition, signPdf } from './pdf/signPdf';
+import { type SignaturePosition } from './pdf/signPdf';
 
 type Tool = 'images' | 'merge' | 'sign';
 
@@ -129,6 +127,7 @@ export default function App() {
         return;
       }
 
+      const { createPdfFromImages } = await import('./pdf/imageToPdf');
       const bytes = await createPdfFromImages(imageFiles);
       await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.images);
       setMessage(`Created PDF from ${imageFiles.length} image file${imageFiles.length === 1 ? '' : 's'}.`);
@@ -149,6 +148,7 @@ export default function App() {
         return;
       }
 
+      const { mergePdfs } = await import('./pdf/mergePdfs');
       const bytes = await mergePdfs(pdfFiles);
       await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.merge);
       setMessage(`Merged ${pdfFiles.length} PDF files.`);
@@ -169,6 +169,7 @@ export default function App() {
         return;
       }
 
+      const { signPdf } = await import('./pdf/signPdf');
       const bytes = await signPdf(pdfFile, hasHandwrittenSignature
         ? {
             type: 'image',
