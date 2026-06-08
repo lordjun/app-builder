@@ -1,0 +1,9 @@
+rank,direction,free_signal,paid_signal,grossing_signal,pain_signal,feasibility,priority,recommendation
+1,Printer / casting / remote / home device tools,4,4,5,5,3,High,"Commercially strongest tool opportunity; deep-dive reviews and compatibility risk"
+2,Employee scheduling / shift management / small business operations,3,5,4,5,3,High,"HotSchedules paid rank and low Google Play rating make this worth B2B workflow research"
+3,PDF / scanner / document tools,5,3,4,4,5,High,"Fastest MVP path; pair free demand with scan/print/document monetization"
+4,Phone storage cleaner / file organizer,5,3,5,3,4,Medium-High,"Strong revenue signal; must solve trust, privacy, and transparency"
+5,Auto diagnostics / OBD / Android Auto tools,3,5,3,5,2,Medium-High,"Strong paid demand but high device compatibility complexity"
+6,Automation / workflow builder tools,3,5,3,3,3,Medium,"Tasker validates paid demand; opportunity is lowering learning curve with templates"
+7,Professional creator tools,3,5,4,4,2,Medium,"Paid demand exists in music/design, but product depth requirements are high"
+8,Authenticator / 2FA / password utilities,4,3,4,5,2,Medium,"Strong pain but security trust bar makes it poor as first product"
