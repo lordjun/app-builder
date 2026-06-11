@@ -352,6 +352,21 @@ describe('App', () => {
     expect(await screen.findByText('This PDF has 4 pages.')).toBeInTheDocument();
   });
 
+  it('validates split page ranges before processing when the page count is known', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Split PDF' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [new File(['pdf'], 'source.pdf', { type: 'application/pdf' })] },
+    });
+    await screen.findByText('This PDF has 4 pages.');
+
+    fireEvent.change(screen.getByLabelText('Pages to keep'), { target: { value: '1-5' } });
+
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeDisabled();
+    expect(screen.getByText('Page 5 is outside this 4-page PDF.')).toBeInTheDocument();
+  });
+
   it('splits a PDF after explicit confirmation', async () => {
     render(<App />);
 
@@ -397,6 +412,21 @@ describe('App', () => {
 
     await waitFor(() => expect(getPdfPageCount).toHaveBeenCalledWith(source));
     expect(await screen.findByText('This PDF has 4 pages.')).toBeInTheDocument();
+  });
+
+  it('validates reorder page order before processing when the page count is known', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [new File(['pdf'], 'source.pdf', { type: 'application/pdf' })] },
+    });
+    await screen.findByText('This PDF has 4 pages.');
+
+    fireEvent.change(screen.getByLabelText('New page order'), { target: { value: '1,2,2,4' } });
+
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeDisabled();
+    expect(screen.getByText('Page 2 appears more than once.')).toBeInTheDocument();
   });
 
   it('reorders a PDF after explicit confirmation', async () => {

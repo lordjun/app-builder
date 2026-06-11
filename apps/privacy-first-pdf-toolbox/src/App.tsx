@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { downloadPdf } from './pdf/download';
 import { validateFiles } from './pdf/fileValidation';
 import { normalizePdfFilename } from './pdf/outputFilename';
+import { parsePageOrder } from './pdf/pageOrder';
+import { parsePageRanges } from './pdf/pageRanges';
 import { type SignaturePosition } from './pdf/signPdf';
 
 type Tool = 'images' | 'merge' | 'split' | 'reorder' | 'sign';
@@ -104,8 +106,8 @@ export default function App() {
   const supportsDirectoryPicker = typeof window !== 'undefined' && 'showDirectoryPicker' in window;
   const inputConfig = TOOL_INPUTS[tool];
   const selectedFileProblem = getSelectedFileProblem(tool, selectedFiles);
-  const pageRangeProblem = selectedFiles.length > 0 ? getPageRangeProblem(tool, pageRanges) : null;
-  const pageOrderProblem = selectedFiles.length > 0 ? getPageOrderProblem(tool, pageOrder) : null;
+  const pageRangeProblem = selectedFiles.length > 0 ? getPageRangeProblem(tool, pageRanges, pdfPageCount) : null;
+  const pageOrderProblem = selectedFiles.length > 0 ? getPageOrderProblem(tool, pageOrder, pdfPageCount) : null;
   const signatureProblem = selectedFiles.length > 0 ? getSignatureProblem(tool, signature, hasHandwrittenSignature) : null;
   const startProblem = selectedFileProblem ?? pageRangeProblem ?? pageOrderProblem ?? signatureProblem;
   const canStartProcessing = selectedFiles.length > 0 && !startProblem && !isProcessing;
@@ -739,20 +741,46 @@ function getSelectedFileProblem(tool: Tool, files: File[]): string | null {
   return files.length === 1 ? null : 'Keep one PDF file for signing.';
 }
 
-function getPageOrderProblem(tool: Tool, pageOrder: string): string | null {
-  if (tool !== 'reorder' || pageOrder.trim().length > 0) {
+function getPageOrderProblem(tool: Tool, pageOrder: string, pdfPageCount: number | null): string | null {
+  if (tool !== 'reorder') {
     return null;
   }
 
-  return 'Enter the new page order, such as 3,1,2.';
+  if (pageOrder.trim().length === 0) {
+    return 'Enter the new page order, such as 3,1,2.';
+  }
+
+  if (pdfPageCount === null) {
+    return null;
+  }
+
+  try {
+    parsePageOrder(pageOrder, pdfPageCount);
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : 'Use a valid page order.';
+  }
 }
 
-function getPageRangeProblem(tool: Tool, pageRanges: string): string | null {
-  if (tool !== 'split' || pageRanges.trim().length > 0) {
+function getPageRangeProblem(tool: Tool, pageRanges: string, pdfPageCount: number | null): string | null {
+  if (tool !== 'split') {
     return null;
   }
 
-  return 'Enter pages to keep, such as 1-3,5.';
+  if (pageRanges.trim().length === 0) {
+    return 'Enter pages to keep, such as 1-3,5.';
+  }
+
+  if (pdfPageCount === null) {
+    return null;
+  }
+
+  try {
+    parsePageRanges(pageRanges, pdfPageCount);
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : 'Use valid page ranges.';
+  }
 }
 
 function getSignatureProblem(tool: Tool, signature: string, hasHandwrittenSignature: boolean): string | null {

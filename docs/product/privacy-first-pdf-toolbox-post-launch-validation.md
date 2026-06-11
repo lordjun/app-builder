@@ -28,6 +28,7 @@ https://lordjun.github.io/app-builder/
 - [ ] Split PDF works with one real PDF and a range such as `1-3,5`.
 - [ ] Reorder Pages works with one real PDF and a complete order such as `3,1,2`.
 - [ ] Split PDF and Reorder Pages show the selected PDF page count before processing.
+- [ ] Split PDF and Reorder Pages show page input errors before processing.
 - [ ] Sign PDF works with text signature.
 - [ ] Sign PDF works with handwritten signature.
 - [ ] Downloads fallback works.
