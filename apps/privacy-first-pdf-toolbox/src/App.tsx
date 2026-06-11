@@ -4,12 +4,13 @@ import { validateFiles } from './pdf/fileValidation';
 import { normalizePdfFilename } from './pdf/outputFilename';
 import { type SignaturePosition } from './pdf/signPdf';
 
-type Tool = 'images' | 'merge' | 'split' | 'sign';
+type Tool = 'images' | 'merge' | 'split' | 'reorder' | 'sign';
 
 const DEFAULT_OUTPUT_FILENAMES: Record<Tool, string> = {
   images: 'images-to-pdf.pdf',
   merge: 'merged.pdf',
   split: 'split.pdf',
+  reorder: 'reordered.pdf',
   sign: 'signed.pdf',
 };
 
@@ -65,6 +66,13 @@ const TOOL_INPUTS: Record<Tool, {
     requirement: 'Drop or choose one PDF, then enter pages to keep.',
     selectLabel: 'Select PDF',
   },
+  reorder: {
+    accept: 'application/pdf',
+    dropZoneLabel: 'PDF reorder upload drop zone',
+    multiple: false,
+    requirement: 'Drop or choose one PDF, then enter the new page order.',
+    selectLabel: 'Select PDF',
+  },
   sign: {
     accept: 'application/pdf',
     dropZoneLabel: 'PDF signing upload drop zone',
@@ -78,6 +86,7 @@ export default function App() {
   const [tool, setTool] = useState<Tool>('images');
   const [message, setMessage] = useState('Choose a tool to start.');
   const [pageRanges, setPageRanges] = useState('');
+  const [pageOrder, setPageOrder] = useState('');
   const [signature, setSignature] = useState('');
   const [signaturePosition, setSignaturePosition] = useState<SignaturePosition>('bottom-right');
   const [hasHandwrittenSignature, setHasHandwrittenSignature] = useState(false);
@@ -95,8 +104,9 @@ export default function App() {
   const inputConfig = TOOL_INPUTS[tool];
   const selectedFileProblem = getSelectedFileProblem(tool, selectedFiles);
   const pageRangeProblem = selectedFiles.length > 0 ? getPageRangeProblem(tool, pageRanges) : null;
+  const pageOrderProblem = selectedFiles.length > 0 ? getPageOrderProblem(tool, pageOrder) : null;
   const signatureProblem = selectedFiles.length > 0 ? getSignatureProblem(tool, signature, hasHandwrittenSignature) : null;
-  const startProblem = selectedFileProblem ?? pageRangeProblem ?? signatureProblem;
+  const startProblem = selectedFileProblem ?? pageRangeProblem ?? pageOrderProblem ?? signatureProblem;
   const canStartProcessing = selectedFiles.length > 0 && !startProblem && !isProcessing;
 
   function changeTool(nextTool: Tool) {
@@ -105,6 +115,7 @@ export default function App() {
     setHasCompletedOutput(false);
     setOutputFilename(DEFAULT_OUTPUT_FILENAMES[nextTool]);
     setPageRanges('');
+    setPageOrder('');
     setMessage('Choose source files, then start processing.');
   }
 
@@ -188,6 +199,11 @@ export default function App() {
         return;
       }
 
+      if (tool === 'reorder') {
+        await runReorder(selectedFiles);
+        return;
+      }
+
       await runSign(selectedFiles);
     } finally {
       processingRef.current = false;
@@ -261,6 +277,33 @@ export default function App() {
       const bytes = await splitPdf(pdfFile, trimmedPageRanges);
       const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.split);
       setCompletedMessage(`Split ${pdfFile.name} into a new PDF.`, saveResult);
+    });
+  }
+
+  async function runReorder(files: File[]) {
+    await runSafely(async () => {
+      const validation = validateFiles(files);
+      if (!validation.valid) {
+        setValidationErrorMessage(validation.errors);
+        return;
+      }
+
+      const [pdfFile] = files.filter((file) => file.type === 'application/pdf');
+      if (!pdfFile) {
+        setMessage('Choose one PDF to reorder.');
+        return;
+      }
+
+      const trimmedPageOrder = pageOrder.trim();
+      if (trimmedPageOrder.length === 0) {
+        setMessage('Enter the new page order, such as 3,1,2.');
+        return;
+      }
+
+      const { reorderPdf } = await import('./pdf/reorderPdf');
+      const bytes = await reorderPdf(pdfFile, trimmedPageOrder);
+      const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.reorder);
+      setCompletedMessage(`Reordered pages in ${pdfFile.name}.`, saveResult);
     });
   }
 
@@ -442,13 +485,14 @@ export default function App() {
           </a>
         </div>
         <h1 id="app-title">Privacy PDF Toolbox</h1>
-        <p className="lede">Create, merge, split, and sign PDFs in your browser. Files stay local by default.</p>
+        <p className="lede">Create, merge, split, reorder, and sign PDFs in your browser. Files stay local by default.</p>
       </section>
 
       <section className="tool-grid" aria-label="PDF tools">
         <button className={tool === 'images' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('images')}>Images to PDF</button>
         <button className={tool === 'merge' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('merge')}>Merge PDFs</button>
         <button className={tool === 'split' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('split')}>Split PDF</button>
+        <button className={tool === 'reorder' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('reorder')}>Reorder Pages</button>
         <button className={tool === 'sign' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('sign')}>Sign PDF</button>
       </section>
 
@@ -473,6 +517,17 @@ export default function App() {
               placeholder="1-3,5"
               value={pageRanges}
               onChange={(event) => setPageRanges(event.target.value)}
+            />
+          </label>
+        )}
+        {tool === 'reorder' && (
+          <label className="page-range-field">
+            New page order
+            <input
+              aria-label="New page order"
+              placeholder="3,1,2"
+              value={pageOrder}
+              onChange={(event) => setPageOrder(event.target.value)}
             />
           </label>
         )}
@@ -648,11 +703,27 @@ function getSelectedFileProblem(tool: Tool, files: File[]): string | null {
     return files.length === 1 ? null : 'Keep one PDF file for splitting.';
   }
 
+  if (tool === 'reorder') {
+    if (!files.every((file) => file.type === 'application/pdf')) {
+      return 'Use one PDF file for reordering.';
+    }
+
+    return files.length === 1 ? null : 'Keep one PDF file for reordering.';
+  }
+
   if (!files.every((file) => file.type === 'application/pdf')) {
     return 'Use one PDF file for signing.';
   }
 
   return files.length === 1 ? null : 'Keep one PDF file for signing.';
+}
+
+function getPageOrderProblem(tool: Tool, pageOrder: string): string | null {
+  if (tool !== 'reorder' || pageOrder.trim().length > 0) {
+    return null;
+  }
+
+  return 'Enter the new page order, such as 3,1,2.';
 }
 
 function getPageRangeProblem(tool: Tool, pageRanges: string): string | null {

@@ -42,6 +42,8 @@ Run the app locally and verify:
 - [ ] Merge output follows the displayed file order.
 - [ ] Split PDF requires one PDF plus a page range such as `1-3,5`.
 - [ ] Split output contains only the selected pages.
+- [ ] Reorder Pages requires one PDF plus a complete page order such as `3,1,2`.
+- [ ] Reorder output keeps every page exactly once in the requested order.
 - [ ] Sign PDF requires one PDF plus text or handwritten signature.
 - [ ] Text signature trims blank-only input before signing.
 - [ ] Handwritten signature can be cleared.

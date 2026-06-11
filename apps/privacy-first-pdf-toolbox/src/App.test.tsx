@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { createPdfFromImages } from './pdf/imageToPdf';
 import { downloadPdf } from './pdf/download';
+import { reorderPdf } from './pdf/reorderPdf';
 import { signPdf } from './pdf/signPdf';
 import { splitPdf } from './pdf/splitPdf';
 
@@ -13,6 +14,10 @@ vi.mock('./pdf/imageToPdf', () => ({
 
 vi.mock('./pdf/download', () => ({
   downloadPdf: vi.fn(),
+}));
+
+vi.mock('./pdf/reorderPdf', () => ({
+  reorderPdf: vi.fn(async () => new Uint8Array([10, 11, 12])),
 }));
 
 vi.mock('./pdf/signPdf', () => ({
@@ -29,7 +34,7 @@ describe('App', () => {
     Reflect.deleteProperty(window, 'showDirectoryPicker');
   });
 
-  it('renders the product name, privacy promise, and four tool entries', () => {
+  it('renders the product name, privacy promise, and five tool entries', () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: 'Privacy PDF Toolbox' })).toBeInTheDocument();
@@ -37,6 +42,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Images to PDF' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Merge PDFs' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Split PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reorder Pages' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign PDF' })).toBeInTheDocument();
   });
 
@@ -88,6 +94,9 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Split PDF' }));
     expect(screen.getByText('Drop or choose one PDF, then enter pages to keep.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
+    expect(screen.getByText('Drop or choose one PDF, then enter the new page order.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign PDF' }));
     expect(screen.getByText('Drop or choose one PDF file.')).toBeInTheDocument();
@@ -341,6 +350,40 @@ describe('App', () => {
 
     await waitFor(() => expect(splitPdf).toHaveBeenCalledWith(source, '1-3,5'));
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([7, 8, 9]), 'split.pdf');
+  });
+
+  it('requires a page order before reordering a PDF', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [new File(['pdf'], 'source.pdf', { type: 'application/pdf' })] },
+    });
+
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeDisabled();
+    expect(screen.getByText('Enter the new page order, such as 3,1,2.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('New page order'), { target: { value: '3,1,2' } });
+
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
+  });
+
+  it('reorders a PDF after explicit confirmation', async () => {
+    render(<App />);
+
+    const source = new File(['pdf'], 'source.pdf', { type: 'application/pdf' });
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
+    fireEvent.change(screen.getByLabelText('New page order'), { target: { value: '3,1,2' } });
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [source] },
+    });
+
+    expect(reorderPdf).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    await waitFor(() => expect(reorderPdf).toHaveBeenCalledWith(source, '3,1,2'));
+    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([10, 11, 12]), 'reordered.pdf');
   });
 
   it('uses the custom output filename when processing files', async () => {
