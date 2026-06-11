@@ -78,6 +78,8 @@ The workflow runs tests, builds `apps/privacy-first-pdf-toolbox/dist`, and deplo
 
 Use [Privacy PDF Toolbox Release Checklist](../../docs/release/privacy-first-pdf-toolbox-checklist.md) before pushing or publishing a release.
 
+Use [Post-Launch Validation Plan](../../docs/product/privacy-first-pdf-toolbox-post-launch-validation.md) after the public release to decide the next product iteration.
+
 ## Feedback
 
 The app header includes a `Send feedback` link that opens a prefilled GitHub issue in `lordjun/app-builder` with the `feedback` label.

@@ -2,19 +2,21 @@
 
 This is the final pre-push handoff for manually publishing the Privacy PDF Toolbox MVP.
 
-## Local Commits Waiting To Push
+## Local Push State
 
-Current local `main` is ahead of `origin/main` by 5 commits:
+Current local `main` has been pushed and is synced with `origin/main`.
+
+Latest relevant commits:
 
 ```text
+22def4a Update remaining Pages workflow actions
+d9ab3ba Update Pages deploy action to Node 24
+8f137c8 Add PDF toolbox deploy handoff
 942971e Fix PDF toolbox Pages asset paths
 27d59dc Document PDF toolbox release checklist
-169885d Polish PDF file actions and signing guardrails
-8c50bfe Improve PDF file input workflow
-d47eb7e Add completion details for PDF output
 ```
 
-Codex should not push these commits. The user will push manually.
+Codex should not push future commits unless the user explicitly changes the current no-push instruction.
 
 ## Manual Push
 
