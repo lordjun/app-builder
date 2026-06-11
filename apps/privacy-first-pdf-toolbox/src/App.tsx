@@ -4,11 +4,12 @@ import { validateFiles } from './pdf/fileValidation';
 import { normalizePdfFilename } from './pdf/outputFilename';
 import { type SignaturePosition } from './pdf/signPdf';
 
-type Tool = 'images' | 'merge' | 'sign';
+type Tool = 'images' | 'merge' | 'split' | 'sign';
 
 const DEFAULT_OUTPUT_FILENAMES: Record<Tool, string> = {
   images: 'images-to-pdf.pdf',
   merge: 'merged.pdf',
+  split: 'split.pdf',
   sign: 'signed.pdf',
 };
 
@@ -57,6 +58,13 @@ const TOOL_INPUTS: Record<Tool, {
     requirement: 'Drop or choose at least two PDF files.',
     selectLabel: 'Select PDFs',
   },
+  split: {
+    accept: 'application/pdf',
+    dropZoneLabel: 'PDF split upload drop zone',
+    multiple: false,
+    requirement: 'Drop or choose one PDF, then enter pages to keep.',
+    selectLabel: 'Select PDF',
+  },
   sign: {
     accept: 'application/pdf',
     dropZoneLabel: 'PDF signing upload drop zone',
@@ -69,6 +77,7 @@ const TOOL_INPUTS: Record<Tool, {
 export default function App() {
   const [tool, setTool] = useState<Tool>('images');
   const [message, setMessage] = useState('Choose a tool to start.');
+  const [pageRanges, setPageRanges] = useState('');
   const [signature, setSignature] = useState('');
   const [signaturePosition, setSignaturePosition] = useState<SignaturePosition>('bottom-right');
   const [hasHandwrittenSignature, setHasHandwrittenSignature] = useState(false);
@@ -85,8 +94,9 @@ export default function App() {
   const supportsDirectoryPicker = typeof window !== 'undefined' && 'showDirectoryPicker' in window;
   const inputConfig = TOOL_INPUTS[tool];
   const selectedFileProblem = getSelectedFileProblem(tool, selectedFiles);
+  const pageRangeProblem = selectedFiles.length > 0 ? getPageRangeProblem(tool, pageRanges) : null;
   const signatureProblem = selectedFiles.length > 0 ? getSignatureProblem(tool, signature, hasHandwrittenSignature) : null;
-  const startProblem = selectedFileProblem ?? signatureProblem;
+  const startProblem = selectedFileProblem ?? pageRangeProblem ?? signatureProblem;
   const canStartProcessing = selectedFiles.length > 0 && !startProblem && !isProcessing;
 
   function changeTool(nextTool: Tool) {
@@ -94,6 +104,7 @@ export default function App() {
     setSelectedFiles([]);
     setHasCompletedOutput(false);
     setOutputFilename(DEFAULT_OUTPUT_FILENAMES[nextTool]);
+    setPageRanges('');
     setMessage('Choose source files, then start processing.');
   }
 
@@ -172,6 +183,11 @@ export default function App() {
         return;
       }
 
+      if (tool === 'split') {
+        await runSplit(selectedFiles);
+        return;
+      }
+
       await runSign(selectedFiles);
     } finally {
       processingRef.current = false;
@@ -218,6 +234,33 @@ export default function App() {
       const bytes = await mergePdfs(pdfFiles);
       const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.merge);
       setCompletedMessage(`Merged ${pdfFiles.length} PDF files.`, saveResult);
+    });
+  }
+
+  async function runSplit(files: File[]) {
+    await runSafely(async () => {
+      const validation = validateFiles(files);
+      if (!validation.valid) {
+        setValidationErrorMessage(validation.errors);
+        return;
+      }
+
+      const [pdfFile] = files.filter((file) => file.type === 'application/pdf');
+      if (!pdfFile) {
+        setMessage('Choose one PDF to split.');
+        return;
+      }
+
+      const trimmedPageRanges = pageRanges.trim();
+      if (trimmedPageRanges.length === 0) {
+        setMessage('Enter pages to keep, such as 1-3,5.');
+        return;
+      }
+
+      const { splitPdf } = await import('./pdf/splitPdf');
+      const bytes = await splitPdf(pdfFile, trimmedPageRanges);
+      const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.split);
+      setCompletedMessage(`Split ${pdfFile.name} into a new PDF.`, saveResult);
     });
   }
 
@@ -399,12 +442,13 @@ export default function App() {
           </a>
         </div>
         <h1 id="app-title">Privacy PDF Toolbox</h1>
-        <p className="lede">Create, merge, and sign PDFs in your browser. Files stay local by default.</p>
+        <p className="lede">Create, merge, split, and sign PDFs in your browser. Files stay local by default.</p>
       </section>
 
       <section className="tool-grid" aria-label="PDF tools">
         <button className={tool === 'images' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('images')}>Images to PDF</button>
         <button className={tool === 'merge' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('merge')}>Merge PDFs</button>
+        <button className={tool === 'split' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('split')}>Split PDF</button>
         <button className={tool === 'sign' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('sign')}>Sign PDF</button>
       </section>
 
@@ -421,6 +465,17 @@ export default function App() {
           <span className="destination-label">{saveDirectory ? 'Custom folder selected' : 'No custom folder selected'}</span>
         </div>
         {tool !== 'sign' && filePicker}
+        {tool === 'split' && (
+          <label className="page-range-field">
+            Pages to keep
+            <input
+              aria-label="Pages to keep"
+              placeholder="1-3,5"
+              value={pageRanges}
+              onChange={(event) => setPageRanges(event.target.value)}
+            />
+          </label>
+        )}
         {tool === 'sign' && (
           <div className="signing-panel">
             <label>
@@ -585,11 +640,27 @@ function getSelectedFileProblem(tool: Tool, files: File[]): string | null {
     return files.length >= 2 ? null : 'Add at least two PDF files to merge.';
   }
 
+  if (tool === 'split') {
+    if (!files.every((file) => file.type === 'application/pdf')) {
+      return 'Use one PDF file for splitting.';
+    }
+
+    return files.length === 1 ? null : 'Keep one PDF file for splitting.';
+  }
+
   if (!files.every((file) => file.type === 'application/pdf')) {
     return 'Use one PDF file for signing.';
   }
 
   return files.length === 1 ? null : 'Keep one PDF file for signing.';
+}
+
+function getPageRangeProblem(tool: Tool, pageRanges: string): string | null {
+  if (tool !== 'split' || pageRanges.trim().length > 0) {
+    return null;
+  }
+
+  return 'Enter pages to keep, such as 1-3,5.';
 }
 
 function getSignatureProblem(tool: Tool, signature: string, hasHandwrittenSignature: boolean): string | null {

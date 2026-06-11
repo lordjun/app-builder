@@ -40,6 +40,8 @@ Run the app locally and verify:
 - [ ] Images can be reordered before processing.
 - [ ] Merge PDFs requires at least two PDF files.
 - [ ] Merge output follows the displayed file order.
+- [ ] Split PDF requires one PDF plus a page range such as `1-3,5`.
+- [ ] Split output contains only the selected pages.
 - [ ] Sign PDF requires one PDF plus text or handwritten signature.
 - [ ] Text signature trims blank-only input before signing.
 - [ ] Handwritten signature can be cleared.

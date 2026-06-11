@@ -25,6 +25,7 @@ https://lordjun.github.io/app-builder/
 - [ ] Deployed page loads without asset 404s.
 - [ ] Images to PDF works with at least 2 real phone photos.
 - [ ] Merge PDFs works with at least 2 real PDFs.
+- [ ] Split PDF works with one real PDF and a range such as `1-3,5`.
 - [ ] Sign PDF works with text signature.
 - [ ] Sign PDF works with handwritten signature.
 - [ ] Downloads fallback works.
@@ -40,6 +41,7 @@ Use this with 5 to 10 test users.
 2. Give them one task only:
    - Convert phone photos into one PDF, or
    - Merge two PDFs, or
+   - Split one PDF into a shorter PDF, or
    - Sign one PDF.
 3. Do not explain the UI unless they are blocked.
 4. Record:
@@ -85,14 +87,14 @@ Initial candidates:
 | Feature | Why It Might Matter | Risk |
 |---|---|---|
 | Compress PDF | Common high-frequency PDF utility and monetizable pro feature | Browser-only compression quality may be limited |
-| Split PDF | Simple, local-first, useful for forms and document cleanup | Requires page preview or clear page range input |
+| Split PDF | Shipped MVP feature; validate whether page range input is clear enough | May need page preview if users make range mistakes |
 | Reorder PDF Pages | Strong workflow fit with merge and images-to-PDF | Better with thumbnails, which adds UI complexity |
 | OCR | High perceived value and monetization potential | Larger dependency/API/privacy tradeoff |
 | Batch Processing | Strong pro feature for power users | Needs careful memory and error handling |
 
 ## Recommended Next Experiment
 
-Start with `Split PDF` if user feedback is unclear. It is easier to validate than OCR or compression, stays local-first, and expands the current PDF workflow without introducing accounts, uploads, or third-party APIs.
+Split PDF is now the next validation target. It is easier to validate than OCR or compression, stays local-first, and expands the current PDF workflow without introducing accounts, uploads, or third-party APIs.
 
 Testable MVP:
 

@@ -1,11 +1,12 @@
 # Privacy PDF Toolbox
 
-Local-first PDF tools for images, merging, and signatures. The app runs in the browser and keeps source files local by default.
+Local-first PDF tools for images, merging, splitting, and signatures. The app runs in the browser and keeps source files local by default.
 
 ## Current MVP
 
 - Images to PDF: accepts PNG/JPEG files, preserves selected order, and exports one PDF.
 - Merge PDFs: accepts two or more PDF files and merges them in the displayed order.
+- Split PDF: accepts one PDF, lets the user enter page ranges such as `1-3,5`, and exports a new PDF with only those pages.
 - Sign PDF: accepts one PDF and applies either text signature or handwritten signature on the first page.
 - Local save flow: defaults to browser Downloads, with optional folder selection in browsers that support the File System Access API.
 - PWA shell: includes a web manifest, app icon, and service worker for cached app-shell loading.
