@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { createPdfFromImages } from './pdf/imageToPdf';
 import { downloadPdf } from './pdf/download';
+import { getPdfPageCount } from './pdf/pdfPageCount';
 import { reorderPdf } from './pdf/reorderPdf';
 import { signPdf } from './pdf/signPdf';
 import { splitPdf } from './pdf/splitPdf';
@@ -14,6 +15,10 @@ vi.mock('./pdf/imageToPdf', () => ({
 
 vi.mock('./pdf/download', () => ({
   downloadPdf: vi.fn(),
+}));
+
+vi.mock('./pdf/pdfPageCount', () => ({
+  getPdfPageCount: vi.fn(async () => 4),
 }));
 
 vi.mock('./pdf/reorderPdf', () => ({
@@ -334,6 +339,19 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
   });
 
+  it('shows the PDF page count after selecting a PDF for splitting', async () => {
+    render(<App />);
+
+    const source = new File(['pdf'], 'source.pdf', { type: 'application/pdf' });
+    fireEvent.click(screen.getByRole('button', { name: 'Split PDF' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [source] },
+    });
+
+    await waitFor(() => expect(getPdfPageCount).toHaveBeenCalledWith(source));
+    expect(await screen.findByText('This PDF has 4 pages.')).toBeInTheDocument();
+  });
+
   it('splits a PDF after explicit confirmation', async () => {
     render(<App />);
 
@@ -366,6 +384,19 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('New page order'), { target: { value: '3,1,2' } });
 
     expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
+  });
+
+  it('shows the PDF page count after selecting a PDF for reordering', async () => {
+    render(<App />);
+
+    const source = new File(['pdf'], 'source.pdf', { type: 'application/pdf' });
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [source] },
+    });
+
+    await waitFor(() => expect(getPdfPageCount).toHaveBeenCalledWith(source));
+    expect(await screen.findByText('This PDF has 4 pages.')).toBeInTheDocument();
   });
 
   it('reorders a PDF after explicit confirmation', async () => {

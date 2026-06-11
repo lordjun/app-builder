@@ -87,6 +87,7 @@ export default function App() {
   const [message, setMessage] = useState('Choose a tool to start.');
   const [pageRanges, setPageRanges] = useState('');
   const [pageOrder, setPageOrder] = useState('');
+  const [pdfPageCount, setPdfPageCount] = useState<number | null>(null);
   const [signature, setSignature] = useState('');
   const [signaturePosition, setSignaturePosition] = useState<SignaturePosition>('bottom-right');
   const [hasHandwrittenSignature, setHasHandwrittenSignature] = useState(false);
@@ -116,6 +117,7 @@ export default function App() {
     setOutputFilename(DEFAULT_OUTPUT_FILENAMES[nextTool]);
     setPageRanges('');
     setPageOrder('');
+    setPdfPageCount(null);
     setMessage('Choose source files, then start processing.');
   }
 
@@ -123,7 +125,23 @@ export default function App() {
     const selected = Array.from(files ?? []);
     setSelectedFiles(selected);
     setHasCompletedOutput(false);
+    setPdfPageCount(null);
     setMessage(selected.length > 0 ? `${selected.length} source file${selected.length === 1 ? '' : 's'} selected.` : 'Choose source files, then start processing.');
+    void updatePdfPageCount(selected);
+  }
+
+  async function updatePdfPageCount(files: File[]) {
+    if ((tool !== 'split' && tool !== 'reorder') || files.length !== 1 || files[0].type !== 'application/pdf') {
+      return;
+    }
+
+    const [pdfFile] = files;
+    try {
+      const { getPdfPageCount } = await import('./pdf/pdfPageCount');
+      setPdfPageCount(await getPdfPageCount(pdfFile));
+    } catch {
+      setPdfPageCount(null);
+    }
   }
 
   function handleUploadDrop(event: React.DragEvent<HTMLDivElement>) {
@@ -530,6 +548,9 @@ export default function App() {
               onChange={(event) => setPageOrder(event.target.value)}
             />
           </label>
+        )}
+        {pdfPageCount !== null && (tool === 'split' || tool === 'reorder') && (
+          <p className="page-count-hint">This PDF has {pdfPageCount} page{pdfPageCount === 1 ? '' : 's'}.</p>
         )}
         {tool === 'sign' && (
           <div className="signing-panel">

@@ -27,6 +27,7 @@ https://lordjun.github.io/app-builder/
 - [ ] Merge PDFs works with at least 2 real PDFs.
 - [ ] Split PDF works with one real PDF and a range such as `1-3,5`.
 - [ ] Reorder Pages works with one real PDF and a complete order such as `3,1,2`.
+- [ ] Split PDF and Reorder Pages show the selected PDF page count before processing.
 - [ ] Sign PDF works with text signature.
 - [ ] Sign PDF works with handwritten signature.
 - [ ] Downloads fallback works.
@@ -102,6 +103,7 @@ Testable MVP:
 
 - User selects one PDF.
 - User enters page ranges, such as `1-3,5`.
+- App shows the selected PDF page count before processing.
 - App exports a new PDF with only those pages.
 - Validation catches invalid ranges and page numbers.
 - User enters a complete page order, such as `3,1,2`.
