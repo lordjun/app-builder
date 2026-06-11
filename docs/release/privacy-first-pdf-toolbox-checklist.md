@@ -30,6 +30,7 @@ Pass criteria:
 - [ ] TypeScript compilation completes without errors.
 - [ ] Vite production build completes and writes `dist/`.
 - [ ] The main app bundle remains separate from lazy PDF task chunks.
+- [ ] `dist/index.html`, `dist/manifest.webmanifest`, and `dist/sw.js` use relative app-shell paths for GitHub Pages project-site deployment.
 
 ## Manual Product Checks
 

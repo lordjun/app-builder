@@ -15,7 +15,7 @@ export type RegisterServiceWorkerOptions = {
 export function registerServiceWorker(options: RegisterServiceWorkerOptions = {}): void {
   const serviceWorker = options.serviceWorker ?? getDefaultServiceWorker();
   const windowRef = options.windowRef ?? window;
-  const scriptUrl = options.scriptUrl ?? '/sw.js';
+  const scriptUrl = options.scriptUrl ?? './sw.js';
 
   if (!serviceWorker) {
     return;

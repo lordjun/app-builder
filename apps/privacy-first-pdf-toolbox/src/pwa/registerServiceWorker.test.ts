@@ -23,7 +23,7 @@ describe('registerServiceWorker', () => {
 
     loadHandler?.();
 
-    expect(register).toHaveBeenCalledWith('/sw.js');
+    expect(register).toHaveBeenCalledWith('./sw.js');
   });
 
   it('does nothing when service workers are unavailable', () => {
