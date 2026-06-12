@@ -1,6 +1,7 @@
 # Local toolchains and caches
 .tools/
 .git-upload/
+.superpowers/
 
 # Node dependencies
 node_modules/

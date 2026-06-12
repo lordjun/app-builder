@@ -64,12 +64,24 @@ describe('App', () => {
   it('shows short descriptions inside the tool cards', () => {
     render(<App />);
 
-    expect(screen.getByText('Turn photos or scans into one PDF.')).toBeInTheDocument();
+    expect(screen.getAllByText('Turn photos or scans into one PDF.').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Combine PDFs in the order shown.')).toBeInTheDocument();
     expect(screen.getByText('Keep only selected pages.')).toBeInTheDocument();
     expect(screen.getByText('Set a new page order.')).toBeInTheDocument();
     expect(screen.getByText('Rebuild and compare file size.')).toBeInTheDocument();
     expect(screen.getByText('Add text or handwritten signature.')).toBeInTheDocument();
+  });
+
+  it('renders the workbench navigation and active tool panel', () => {
+    render(<App />);
+
+    expect(screen.getByRole('navigation', { name: 'PDF tools' })).toBeInTheDocument();
+    expect(screen.getByText('Active tool')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Images to PDF' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Split PDF' }));
+
+    expect(screen.getByRole('heading', { name: 'Split PDF' })).toBeInTheDocument();
   });
 
   it('shows local processing and save destination status', () => {
@@ -288,9 +300,9 @@ describe('App', () => {
     const second = new File(['second'], 'second.png', { type: 'image/png' });
     fireEvent.change(screen.getByLabelText('Select images'), { target: { files: [first, second] } });
 
-    expect(screen.getByRole('button', { name: 'Move second.png up' })).toHaveTextContent('↑');
-    expect(screen.getByRole('button', { name: 'Move first.png down' })).toHaveTextContent('↓');
-    expect(screen.getByRole('button', { name: 'Remove first.png' })).toHaveTextContent('×');
+    expect(screen.getByRole('button', { name: 'Move second.png up' })).toHaveTextContent('^');
+    expect(screen.getByRole('button', { name: 'Move first.png down' })).toHaveTextContent('v');
+    expect(screen.getByRole('button', { name: 'Remove first.png' })).toHaveTextContent('x');
   });
 
   it('processes files in the user-adjusted order', async () => {

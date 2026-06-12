@@ -566,187 +566,205 @@ export default function App() {
         <p className="lede">Create, merge, split, reorder, optimize, and sign PDFs in your browser. Files stay local by default.</p>
       </section>
 
-      <section className="tool-grid" aria-label="PDF tools">
-        {Object.entries(TOOL_INPUTS).map(([toolKey, config]) => (
-          <button
-            aria-label={config.cardLabel}
-            className={tool === toolKey ? 'tool-card active' : 'tool-card'}
-            key={toolKey}
-            type="button"
-            onClick={() => changeTool(toolKey as Tool)}
-          >
-            <span className="tool-card-title">{config.cardLabel}</span>
-            <span className="tool-card-description">{config.cardDescription}</span>
-          </button>
-        ))}
-      </section>
-
-      <section className="workspace" aria-live="polite">
-        <div className="trust-bar" aria-label="Processing and save status">
-          <p className="privacy-note">Files are processed in this browser tab, not uploaded to a server.</p>
-          <p className="save-status">Save destination: {saveDirectory ? 'Selected folder' : 'Downloads'}</p>
-        </div>
-        <div className="save-row">
-          {supportsDirectoryPicker ? (
-            <button className="secondary-button" type="button" onClick={() => void chooseSaveDirectory()}>
-              Choose save folder
-            </button>
-          ) : (
-            <p className="save-fallback">This browser will save through Downloads.</p>
-          )}
-          <span className="destination-label">{saveDirectory ? 'Custom folder selected' : 'No custom folder selected'}</span>
-        </div>
-        {tool !== 'sign' && filePicker}
-        {tool === 'split' && (
-          <label className="page-range-field">
-            Pages to keep
-            <input
-              aria-label="Pages to keep"
-              placeholder="1-3,5"
-              value={pageRanges}
-              onChange={(event) => setPageRanges(event.target.value)}
-            />
-          </label>
-        )}
-        {tool === 'reorder' && (
-          <label className="page-range-field">
-            New page order
-            <input
-              aria-label="New page order"
-              placeholder="3,1,2"
-              value={pageOrder}
-              onChange={(event) => setPageOrder(event.target.value)}
-            />
-          </label>
-        )}
-        {pdfPageCount !== null && (tool === 'split' || tool === 'reorder') && (
-          <p className="page-count-hint">This PDF has {pdfPageCount} page{pdfPageCount === 1 ? '' : 's'}.</p>
-        )}
-        {tool === 'sign' && (
-          <div className="signing-panel">
-            <label>
-              Signature text
-              <input value={signature} onChange={(event) => setSignature(event.target.value)} aria-label="Signature text" />
-            </label>
-            <div className="signature-pad">
-              <canvas
-                aria-label="Handwritten signature pad"
-                className="signature-canvas"
-                height={160}
-                ref={signatureCanvasRef}
-                width={520}
-                onPointerDown={startSignatureStroke}
-                onPointerLeave={endSignatureStroke}
-                onPointerMove={continueSignatureStroke}
-                onPointerUp={endSignatureStroke}
-              />
-              <button className="secondary-button compact-button" type="button" onClick={clearSignatureCanvas}>
-                Clear signature
-              </button>
-            </div>
-            <fieldset className="position-options">
-              <legend>Signature position</legend>
-              <label>
-                <input
-                  checked={signaturePosition === 'bottom-right'}
-                  name="signature-position"
-                  type="radio"
-                  value="bottom-right"
-                  onChange={() => setSignaturePosition('bottom-right')}
-                />
-                Bottom right
-              </label>
-              <label>
-                <input
-                  checked={signaturePosition === 'bottom-left'}
-                  name="signature-position"
-                  type="radio"
-                  value="bottom-left"
-                  onChange={() => setSignaturePosition('bottom-left')}
-                />
-                Bottom left
-              </label>
-              <label>
-                <input
-                  checked={signaturePosition === 'top-right'}
-                  name="signature-position"
-                  type="radio"
-                  value="top-right"
-                  onChange={() => setSignaturePosition('top-right')}
-                />
-                Top right
-              </label>
-              <label>
-                <input
-                  checked={signaturePosition === 'top-left'}
-                  name="signature-position"
-                  type="radio"
-                  value="top-left"
-                  onChange={() => setSignaturePosition('top-left')}
-                />
-                Top left
-              </label>
-            </fieldset>
-            {filePicker}
+      <div className="toolbox-shell">
+        <nav className="tool-rail" aria-label="PDF tools">
+          <div className="rail-heading">
+            <span>Tools</span>
+            <strong>{Object.keys(TOOL_INPUTS).length}</strong>
           </div>
-        )}
-        <label className="filename-field">
-          Output filename
-          <input
-            aria-label="Output filename"
-            value={outputFilename}
-            onChange={(event) => setOutputFilename(event.target.value)}
-          />
-        </label>
-        {selectedFiles.length > 0 && (
-          <section className="selected-files" aria-labelledby="selected-files-title">
-            <h2 id="selected-files-title">Selected files</h2>
-            <ol className="file-list">
-              {selectedFiles.map((file, index) => (
-                <li className="file-row" key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
-                  <div className="file-meta">
-                    <span className="file-name">{file.name}</span>
-                    <span className="file-detail">{formatFileSize(file.size)} | {file.type || 'unknown type'}</span>
-                  </div>
-                  <div className="file-actions">
-                    <button
-                      className="icon-button"
-                      type="button"
-                      aria-label={`Move ${file.name} up`}
-                      disabled={index === 0}
-                      onClick={() => moveFile(index, -1)}
-                    >
-                      <span aria-hidden="true">↑</span>
-                    </button>
-                    <button
-                      className="icon-button"
-                      type="button"
-                      aria-label={`Move ${file.name} down`}
-                      disabled={index === selectedFiles.length - 1}
-                      onClick={() => moveFile(index, 1)}
-                    >
-                      <span aria-hidden="true">↓</span>
-                    </button>
-                    <button className="icon-button danger" type="button" aria-label={`Remove ${file.name}`} onClick={() => removeFile(index)}>
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-        <button className="primary-button" type="button" disabled={!canStartProcessing} onClick={() => void runCurrentTool()}>
-          {isProcessing ? 'Processing...' : 'Start processing'}
-        </button>
-        {startProblem && <p className="input-warning">{startProblem}</p>}
-        <p className="status">{message}</p>
-        {hasCompletedOutput && (
-          <button className="secondary-button follow-up-button" type="button" onClick={resetCurrentBatch}>
-            Process another batch
-          </button>
-        )}
-      </section>
+          <div className="tool-grid">
+            {Object.entries(TOOL_INPUTS).map(([toolKey, config]) => (
+              <button
+                aria-label={config.cardLabel}
+                className={tool === toolKey ? 'tool-card active' : 'tool-card'}
+                key={toolKey}
+                type="button"
+                onClick={() => changeTool(toolKey as Tool)}
+              >
+                <span className="tool-card-title">{config.cardLabel}</span>
+                <span className="tool-card-description">{config.cardDescription}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <section className="workspace" aria-live="polite">
+          <div className="workspace-header">
+            <div>
+              <p className="workspace-eyebrow">Active tool</p>
+              <h2>{inputConfig.cardLabel}</h2>
+              <p>{inputConfig.cardDescription}</p>
+            </div>
+            <span className="local-pill">No upload</span>
+          </div>
+          <div className="trust-bar" aria-label="Processing and save status">
+            <p className="privacy-note">Files are processed in this browser tab, not uploaded to a server.</p>
+            <p className="save-status">Save destination: {saveDirectory ? 'Selected folder' : 'Downloads'}</p>
+          </div>
+          <div className="save-row">
+            {supportsDirectoryPicker ? (
+              <button className="secondary-button" type="button" onClick={() => void chooseSaveDirectory()}>
+                Choose save folder
+              </button>
+            ) : (
+              <p className="save-fallback">This browser will save through Downloads.</p>
+            )}
+            <span className="destination-label">{saveDirectory ? 'Custom folder selected' : 'No custom folder selected'}</span>
+          </div>
+          {tool !== 'sign' && filePicker}
+          {tool === 'split' && (
+            <label className="page-range-field">
+              Pages to keep
+              <input
+                aria-label="Pages to keep"
+                placeholder="1-3,5"
+                value={pageRanges}
+                onChange={(event) => setPageRanges(event.target.value)}
+              />
+            </label>
+          )}
+          {tool === 'reorder' && (
+            <label className="page-range-field">
+              New page order
+              <input
+                aria-label="New page order"
+                placeholder="3,1,2"
+                value={pageOrder}
+                onChange={(event) => setPageOrder(event.target.value)}
+              />
+            </label>
+          )}
+          {pdfPageCount !== null && (tool === 'split' || tool === 'reorder') && (
+            <p className="page-count-hint">This PDF has {pdfPageCount} page{pdfPageCount === 1 ? '' : 's'}.</p>
+          )}
+          {tool === 'sign' && (
+            <div className="signing-panel">
+              <label>
+                Signature text
+                <input value={signature} onChange={(event) => setSignature(event.target.value)} aria-label="Signature text" />
+              </label>
+              <div className="signature-pad">
+                <canvas
+                  aria-label="Handwritten signature pad"
+                  className="signature-canvas"
+                  height={160}
+                  ref={signatureCanvasRef}
+                  width={520}
+                  onPointerDown={startSignatureStroke}
+                  onPointerLeave={endSignatureStroke}
+                  onPointerMove={continueSignatureStroke}
+                  onPointerUp={endSignatureStroke}
+                />
+                <button className="secondary-button compact-button" type="button" onClick={clearSignatureCanvas}>
+                  Clear signature
+                </button>
+              </div>
+              <fieldset className="position-options">
+                <legend>Signature position</legend>
+                <label>
+                  <input
+                    checked={signaturePosition === 'bottom-right'}
+                    name="signature-position"
+                    type="radio"
+                    value="bottom-right"
+                    onChange={() => setSignaturePosition('bottom-right')}
+                  />
+                  Bottom right
+                </label>
+                <label>
+                  <input
+                    checked={signaturePosition === 'bottom-left'}
+                    name="signature-position"
+                    type="radio"
+                    value="bottom-left"
+                    onChange={() => setSignaturePosition('bottom-left')}
+                  />
+                  Bottom left
+                </label>
+                <label>
+                  <input
+                    checked={signaturePosition === 'top-right'}
+                    name="signature-position"
+                    type="radio"
+                    value="top-right"
+                    onChange={() => setSignaturePosition('top-right')}
+                  />
+                  Top right
+                </label>
+                <label>
+                  <input
+                    checked={signaturePosition === 'top-left'}
+                    name="signature-position"
+                    type="radio"
+                    value="top-left"
+                    onChange={() => setSignaturePosition('top-left')}
+                  />
+                  Top left
+                </label>
+              </fieldset>
+              {filePicker}
+            </div>
+          )}
+          <label className="filename-field">
+            Output filename
+            <input
+              aria-label="Output filename"
+              value={outputFilename}
+              onChange={(event) => setOutputFilename(event.target.value)}
+            />
+          </label>
+          {selectedFiles.length > 0 && (
+            <section className="selected-files" aria-labelledby="selected-files-title">
+              <h2 id="selected-files-title">Selected files</h2>
+              <ol className="file-list">
+                {selectedFiles.map((file, index) => (
+                  <li className="file-row" key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
+                    <div className="file-meta">
+                      <span className="file-name">{file.name}</span>
+                      <span className="file-detail">{formatFileSize(file.size)} | {file.type || 'unknown type'}</span>
+                    </div>
+                    <div className="file-actions">
+                      <button
+                        className="icon-button"
+                        type="button"
+                        aria-label={`Move ${file.name} up`}
+                        disabled={index === 0}
+                        onClick={() => moveFile(index, -1)}
+                      >
+                        <span aria-hidden="true">^</span>
+                      </button>
+                      <button
+                        className="icon-button"
+                        type="button"
+                        aria-label={`Move ${file.name} down`}
+                        disabled={index === selectedFiles.length - 1}
+                        onClick={() => moveFile(index, 1)}
+                      >
+                        <span aria-hidden="true">v</span>
+                      </button>
+                      <button className="icon-button danger" type="button" aria-label={`Remove ${file.name}`} onClick={() => removeFile(index)}>
+                        <span aria-hidden="true">x</span>
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+          <div className="action-row">
+            <button className="primary-button" type="button" disabled={!canStartProcessing} onClick={() => void runCurrentTool()}>
+              {isProcessing ? 'Processing...' : 'Start processing'}
+            </button>
+            {hasCompletedOutput && (
+              <button className="secondary-button follow-up-button" type="button" onClick={resetCurrentBatch}>
+                Process another batch
+              </button>
+            )}
+          </div>
+          {startProblem && <p className="input-warning">{startProblem}</p>}
+          <p className="status">{message}</p>
+        </section>
+      </div>
     </main>
   );
 }
