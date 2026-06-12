@@ -20,8 +20,9 @@ Suggested commands from the repository root:
 Run from `apps/privacy-first-pdf-toolbox`:
 
 ```powershell
-npm test
-npm run build
+$env:PATH='C:\Users\Lordjun\Documents\APP制作\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
+npm.cmd test
+npm.cmd run build
 ```
 
 Pass criteria:
@@ -32,35 +33,99 @@ Pass criteria:
 - [ ] The main app bundle remains separate from lazy PDF task chunks.
 - [ ] `dist/index.html`, `dist/manifest.webmanifest`, and `dist/sw.js` use relative app-shell paths for GitHub Pages project-site deployment.
 
+## Local Browser Setup
+
+Run from `apps/privacy-first-pdf-toolbox`:
+
+```powershell
+$env:PATH='C:\Users\Lordjun\Documents\APP制作\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
+npm.cmd run dev -- --port 5173
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/
+```
+
+If the old UI appears, hard refresh. If it still appears, clear site data for `127.0.0.1` because the service worker caches the app shell.
+
+## Test Files
+
+Prepare these files before manual validation:
+
+- [ ] Two PNG or JPEG images with visibly different content.
+- [ ] Two small PDF files that open correctly.
+- [ ] One 4-page PDF with clearly numbered pages for Split PDF and Reorder Pages.
+- [ ] One PDF that may already be optimized, to confirm Optimize PDF gives an honest before/after result.
+- [ ] One unsupported file type, such as `.txt`, for validation checks.
+- [ ] One file larger than 25 MB, if available, for file-size validation.
+
 ## Manual Product Checks
 
-Run the app locally and verify:
+First-screen checks:
 
-- [ ] Images to PDF accepts one or more PNG/JPEG files.
-- [ ] Images can be reordered before processing.
-- [ ] Merge PDFs requires at least two PDF files.
-- [ ] Merge output follows the displayed file order.
-- [ ] Split PDF requires one PDF plus a page range such as `1-3,5`.
-- [ ] Split PDF shows the selected PDF page count.
-- [ ] Split PDF prefills the full page range after reading the selected PDF page count.
-- [ ] Split PDF disables processing and shows a clear warning for out-of-range pages.
-- [ ] Split output contains only the selected pages.
-- [ ] Reorder Pages requires one PDF plus a complete page order such as `3,1,2`.
-- [ ] Reorder Pages shows the selected PDF page count.
-- [ ] Reorder Pages prefills the natural page order after reading the selected PDF page count.
-- [ ] Reorder Pages disables processing and shows a clear warning for duplicate, missing, or out-of-range pages.
-- [ ] Reorder output keeps every page exactly once in the requested order.
-- [ ] Optimize PDF requires one PDF file.
-- [ ] Optimize PDF output opens as a valid PDF.
-- [ ] Optimize PDF success message shows before/after file size.
-- [ ] Sign PDF requires one PDF plus text or handwritten signature.
-- [ ] Text signature trims blank-only input before signing.
-- [ ] Handwritten signature can be cleared.
+- [ ] Header states local-first PDF processing.
+- [ ] Tool cards are visible for Images to PDF, Merge PDFs, Split PDF, Reorder Pages, Optimize PDF, and Sign PDF.
+- [ ] Each tool card has a short description.
+- [ ] Workspace states: `Files are processed in this browser tab, not uploaded to a server.`
+- [ ] Workspace shows `Save destination: Downloads` before choosing a custom folder.
 - [ ] Processing requires the user to click `Start processing`.
-- [ ] Success message shows output filename and save destination.
-- [ ] `Process another batch` clears selected files.
 - [ ] Unsupported file types show a clear warning before processing.
 - [ ] Files over 25 MB show a recoverable validation message.
+
+Images to PDF:
+
+- [ ] Select at least two PNG/JPEG files.
+- [ ] Reorder the selected images before processing.
+- [ ] Click `Start processing`.
+- [ ] Output opens as a valid PDF.
+- [ ] Output page order matches the displayed image order.
+
+Merge PDFs:
+
+- [ ] Select only one PDF and confirm processing stays disabled or shows the minimum-file requirement.
+- [ ] Select at least two PDFs.
+- [ ] Reorder the displayed files.
+- [ ] Click `Start processing`.
+- [ ] Output opens as a valid PDF.
+- [ ] Output page order follows the displayed file order.
+
+Split PDF:
+
+- [ ] Select the 4-page test PDF.
+- [ ] Confirm the selected PDF page count appears.
+- [ ] Confirm the page range is prefilled as `1-4`.
+- [ ] Enter `1-3,5` and confirm processing is disabled or shows an out-of-range warning.
+- [ ] Enter `1-2,4`, click `Start processing`, and confirm the output contains only pages 1, 2, and 4.
+
+Reorder Pages:
+
+- [ ] Select the 4-page test PDF.
+- [ ] Confirm the selected PDF page count appears.
+- [ ] Confirm the page order is prefilled as `1,2,3,4`.
+- [ ] Enter `3,1,2` and confirm processing is disabled or shows a missing-page warning.
+- [ ] Enter `3,1,2,4`, click `Start processing`, and confirm the output keeps every page exactly once in that order.
+
+Optimize PDF:
+
+- [ ] Select one PDF file.
+- [ ] Click `Start processing`.
+- [ ] Output opens as a valid PDF.
+- [ ] Success message shows before/after file size.
+- [ ] If output is larger or unchanged, the message explains that the PDF may already be optimized.
+
+Sign PDF:
+
+- [ ] Select one PDF and enter a text signature.
+- [ ] Click `Start processing` and confirm the output opens with a visible signature.
+- [ ] Try blank-only text and confirm processing is disabled or shows a clear warning unless a handwritten signature exists.
+- [ ] Draw a handwritten signature and confirm it can be cleared.
+
+Completion flow:
+
+- [ ] Success message shows output filename and save destination.
+- [ ] `Process another batch` clears selected files.
 
 ## Browser Checks
 
@@ -68,6 +133,7 @@ Check at least one Chromium-based browser because custom save folder support dep
 
 - [ ] Downloads fallback works when no folder is selected.
 - [ ] `Choose save folder` appears when `showDirectoryPicker` is available.
+- [ ] After choosing a folder, workspace shows `Save destination: Selected folder`.
 - [ ] Selected folder save path writes the generated PDF.
 - [ ] Drag-and-drop file selection works.
 - [ ] Mobile-width layout keeps file rows and action buttons readable.
