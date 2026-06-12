@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { registerServiceWorker } from './pwa/registerServiceWorker';
+import { registerServiceWorker, unregisterServiceWorkers } from './pwa/registerServiceWorker';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -12,4 +12,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
 
 if (import.meta.env.PROD) {
   registerServiceWorker();
+} else {
+  void unregisterServiceWorkers();
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { registerServiceWorker } from './registerServiceWorker';
+import { registerServiceWorker, unregisterServiceWorkers } from './registerServiceWorker';
 
 describe('registerServiceWorker', () => {
   it('registers the app service worker after window load', () => {
@@ -37,5 +37,17 @@ describe('registerServiceWorker', () => {
     });
 
     expect(windowRef.addEventListener).not.toHaveBeenCalled();
+  });
+
+  it('unregisters existing service workers during local development cleanup', async () => {
+    const unregister = vi.fn(async () => true);
+    const getRegistrations = vi.fn(async () => [{ unregister }, { unregister }]);
+
+    await unregisterServiceWorkers({
+      serviceWorker: { getRegistrations },
+    });
+
+    expect(getRegistrations).toHaveBeenCalledTimes(1);
+    expect(unregister).toHaveBeenCalledTimes(2);
   });
 });

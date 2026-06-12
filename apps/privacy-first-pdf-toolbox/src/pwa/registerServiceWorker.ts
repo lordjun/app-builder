@@ -1,5 +1,6 @@
 type ServiceWorkerLike = {
-  register: (scriptURL: string) => Promise<unknown>;
+  register?: (scriptURL: string) => Promise<unknown>;
+  getRegistrations?: () => Promise<ReadonlyArray<{ unregister: () => Promise<boolean> }>>;
 };
 
 type WindowLike = {
@@ -17,13 +18,25 @@ export function registerServiceWorker(options: RegisterServiceWorkerOptions = {}
   const windowRef = options.windowRef ?? window;
   const scriptUrl = options.scriptUrl ?? './sw.js';
 
-  if (!serviceWorker) {
+  if (!serviceWorker?.register) {
     return;
   }
 
+  const register = serviceWorker.register.bind(serviceWorker);
   windowRef.addEventListener('load', () => {
-    void serviceWorker.register(scriptUrl);
+    void register(scriptUrl);
   });
+}
+
+export async function unregisterServiceWorkers(options: Pick<RegisterServiceWorkerOptions, 'serviceWorker'> = {}): Promise<void> {
+  const serviceWorker = options.serviceWorker ?? getDefaultServiceWorker();
+
+  if (!serviceWorker?.getRegistrations) {
+    return;
+  }
+
+  const registrations = await serviceWorker.getRegistrations();
+  await Promise.all(registrations.map((registration) => registration.unregister()));
 }
 
 function getDefaultServiceWorker(): ServiceWorkerLike | undefined {

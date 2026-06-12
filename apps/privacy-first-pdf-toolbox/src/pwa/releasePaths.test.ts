@@ -33,6 +33,7 @@ describe('release paths', () => {
   it('registers the service worker only for production builds', () => {
     expect(mainSource).toContain('if (import.meta.env.PROD)');
     expect(mainSource).toContain('registerServiceWorker();');
+    expect(mainSource).toContain('unregisterServiceWorkers();');
   });
 
   it('does not cache runtime module or chunk requests in the service worker', () => {
