@@ -45,7 +45,9 @@ const TOOL_INPUTS: Record<Tool, {
   accept: string;
   cardDescription: string;
   cardLabel: string;
+  category: 'Create' | 'Organize' | 'Optimize' | 'Sign';
   dropZoneLabel: string;
+  icon: string;
   multiple: boolean;
   requirement: string;
   selectLabel: string;
@@ -54,7 +56,9 @@ const TOOL_INPUTS: Record<Tool, {
     accept: 'image/png,image/jpeg',
     cardDescription: 'Turn photos or scans into one PDF.',
     cardLabel: 'Images to PDF',
+    category: 'Create',
     dropZoneLabel: 'Image upload drop zone',
+    icon: 'IMG',
     multiple: true,
     requirement: 'Drop or choose PNG/JPEG images.',
     selectLabel: 'Select images',
@@ -63,7 +67,9 @@ const TOOL_INPUTS: Record<Tool, {
     accept: 'application/pdf',
     cardDescription: 'Combine PDFs in the order shown.',
     cardLabel: 'Merge PDFs',
+    category: 'Organize',
     dropZoneLabel: 'PDF merge upload drop zone',
+    icon: 'MIX',
     multiple: true,
     requirement: 'Drop or choose at least two PDF files.',
     selectLabel: 'Select PDFs',
@@ -72,7 +78,9 @@ const TOOL_INPUTS: Record<Tool, {
     accept: 'application/pdf',
     cardDescription: 'Keep only selected pages.',
     cardLabel: 'Split PDF',
+    category: 'Organize',
     dropZoneLabel: 'PDF split upload drop zone',
+    icon: 'CUT',
     multiple: false,
     requirement: 'Drop or choose one PDF, then enter pages to keep.',
     selectLabel: 'Select PDF',
@@ -81,7 +89,9 @@ const TOOL_INPUTS: Record<Tool, {
     accept: 'application/pdf',
     cardDescription: 'Set a new page order.',
     cardLabel: 'Reorder Pages',
+    category: 'Organize',
     dropZoneLabel: 'PDF reorder upload drop zone',
+    icon: 'ORD',
     multiple: false,
     requirement: 'Drop or choose one PDF, then enter the new page order.',
     selectLabel: 'Select PDF',
@@ -90,7 +100,9 @@ const TOOL_INPUTS: Record<Tool, {
     accept: 'application/pdf',
     cardDescription: 'Rebuild and compare file size.',
     cardLabel: 'Optimize PDF',
+    category: 'Optimize',
     dropZoneLabel: 'PDF optimize upload drop zone',
+    icon: 'ZIP',
     multiple: false,
     requirement: 'Drop or choose one PDF to optimize and compare file size.',
     selectLabel: 'Select PDF',
@@ -99,12 +111,21 @@ const TOOL_INPUTS: Record<Tool, {
     accept: 'application/pdf',
     cardDescription: 'Add text or handwritten signature.',
     cardLabel: 'Sign PDF',
+    category: 'Sign',
     dropZoneLabel: 'PDF signing upload drop zone',
+    icon: 'SIG',
     multiple: false,
     requirement: 'Drop or choose one PDF file.',
     selectLabel: 'Select PDF',
   },
 };
+
+const TOOL_CATEGORIES: Array<{ label: string; tools: Tool[] }> = [
+  { label: 'Create', tools: ['images'] },
+  { label: 'Organize', tools: ['merge', 'split', 'reorder'] },
+  { label: 'Optimize', tools: ['optimize'] },
+  { label: 'Sign', tools: ['sign'] },
+];
 
 export default function App() {
   const [tool, setTool] = useState<Tool>('images');
@@ -540,7 +561,10 @@ export default function App() {
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleUploadDrop}
     >
-      <p className="input-requirement">{inputConfig.requirement}</p>
+      <div>
+        <p className="input-requirement">{inputConfig.requirement}</p>
+        <p className="dropzone-note">Your source files stay on this device until the browser creates the output PDF.</p>
+      </div>
       <label className="file-picker">
         {inputConfig.selectLabel}
         <input
@@ -556,14 +580,22 @@ export default function App() {
   return (
     <main className="app-shell">
       <section className="hero-panel" aria-labelledby="app-title">
-        <div className="hero-topline">
-          <p className="eyebrow">Local-first document tools</p>
+        <div className="brand-bar">
+          <div className="brand-mark" aria-hidden="true">PDF</div>
+          <div className="brand-copy">
+            <p className="eyebrow">Local-first document tools</p>
+            <h1 id="app-title">Privacy PDF Toolbox</h1>
+          </div>
           <a className="feedback-link" href={FEEDBACK_URL} target="_blank" rel="noreferrer">
             Send feedback
           </a>
         </div>
-        <h1 id="app-title">Privacy PDF Toolbox</h1>
         <p className="lede">Create, merge, split, reorder, optimize, and sign PDFs in your browser. Files stay local by default.</p>
+        <div className="hero-badges" aria-label="Product highlights">
+          <span>Browser-only processing</span>
+          <span>No account required</span>
+          <span>Downloads or selected folder</span>
+        </div>
       </section>
 
       <div className="toolbox-shell">
@@ -573,17 +605,28 @@ export default function App() {
             <strong>{Object.keys(TOOL_INPUTS).length}</strong>
           </div>
           <div className="tool-grid">
-            {Object.entries(TOOL_INPUTS).map(([toolKey, config]) => (
-              <button
-                aria-label={config.cardLabel}
-                className={tool === toolKey ? 'tool-card active' : 'tool-card'}
-                key={toolKey}
-                type="button"
-                onClick={() => changeTool(toolKey as Tool)}
-              >
-                <span className="tool-card-title">{config.cardLabel}</span>
-                <span className="tool-card-description">{config.cardDescription}</span>
-              </button>
+            {TOOL_CATEGORIES.map((category) => (
+              <section className="tool-category" key={category.label} aria-label={`${category.label} tools`}>
+                <p className="category-label">{category.label}</p>
+                {category.tools.map((toolKey) => {
+                  const config = TOOL_INPUTS[toolKey];
+                  return (
+                    <button
+                      aria-label={config.cardLabel}
+                      className={tool === toolKey ? 'tool-card active' : 'tool-card'}
+                      key={toolKey}
+                      type="button"
+                      onClick={() => changeTool(toolKey)}
+                    >
+                      <span className="tool-icon" aria-hidden="true">{config.icon}</span>
+                      <span className="tool-copy">
+                        <span className="tool-card-title">{config.cardLabel}</span>
+                        <span className="tool-card-description">{config.cardDescription}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </section>
             ))}
           </div>
         </nav>
@@ -595,7 +638,10 @@ export default function App() {
               <h2>{inputConfig.cardLabel}</h2>
               <p>{inputConfig.cardDescription}</p>
             </div>
-            <span className="local-pill">No upload</span>
+            <div className="tool-summary">
+              <span className="local-pill">No upload</span>
+              <span>{inputConfig.category}</span>
+            </div>
           </div>
           <div className="trust-bar" aria-label="Processing and save status">
             <p className="privacy-note">Files are processed in this browser tab, not uploaded to a server.</p>

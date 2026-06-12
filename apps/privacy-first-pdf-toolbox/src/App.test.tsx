@@ -78,6 +78,10 @@ describe('App', () => {
     expect(screen.getByRole('navigation', { name: 'PDF tools' })).toBeInTheDocument();
     expect(screen.getByText('Active tool')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Images to PDF' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Product highlights')).toHaveTextContent('Browser-only processing');
+    expect(screen.getByLabelText('Create tools')).toBeInTheDocument();
+    expect(screen.getByLabelText('Organize tools')).toBeInTheDocument();
+    expect(screen.getByText('Your source files stay on this device until the browser creates the output PDF.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Split PDF' }));
 
