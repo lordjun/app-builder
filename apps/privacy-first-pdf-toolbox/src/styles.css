@@ -73,13 +73,27 @@ h1 {
 }
 
 .tool-card {
+  display: grid;
+  align-content: center;
+  gap: 8px;
   min-height: 112px;
   border: 1px solid #dce3e8;
   border-radius: 8px;
+  padding: 14px;
   background: #ffffff;
   color: #172026;
-  font-weight: 700;
   cursor: pointer;
+  text-align: left;
+}
+
+.tool-card-title {
+  font-weight: 700;
+}
+
+.tool-card-description {
+  color: #50616d;
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 
 .tool-card:hover {

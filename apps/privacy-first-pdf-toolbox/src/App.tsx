@@ -43,6 +43,8 @@ type SaveResult = {
 
 const TOOL_INPUTS: Record<Tool, {
   accept: string;
+  cardDescription: string;
+  cardLabel: string;
   dropZoneLabel: string;
   multiple: boolean;
   requirement: string;
@@ -50,6 +52,8 @@ const TOOL_INPUTS: Record<Tool, {
 }> = {
   images: {
     accept: 'image/png,image/jpeg',
+    cardDescription: 'Turn photos or scans into one PDF.',
+    cardLabel: 'Images to PDF',
     dropZoneLabel: 'Image upload drop zone',
     multiple: true,
     requirement: 'Drop or choose PNG/JPEG images.',
@@ -57,6 +61,8 @@ const TOOL_INPUTS: Record<Tool, {
   },
   merge: {
     accept: 'application/pdf',
+    cardDescription: 'Combine PDFs in the order shown.',
+    cardLabel: 'Merge PDFs',
     dropZoneLabel: 'PDF merge upload drop zone',
     multiple: true,
     requirement: 'Drop or choose at least two PDF files.',
@@ -64,6 +70,8 @@ const TOOL_INPUTS: Record<Tool, {
   },
   split: {
     accept: 'application/pdf',
+    cardDescription: 'Keep only selected pages.',
+    cardLabel: 'Split PDF',
     dropZoneLabel: 'PDF split upload drop zone',
     multiple: false,
     requirement: 'Drop or choose one PDF, then enter pages to keep.',
@@ -71,6 +79,8 @@ const TOOL_INPUTS: Record<Tool, {
   },
   reorder: {
     accept: 'application/pdf',
+    cardDescription: 'Set a new page order.',
+    cardLabel: 'Reorder Pages',
     dropZoneLabel: 'PDF reorder upload drop zone',
     multiple: false,
     requirement: 'Drop or choose one PDF, then enter the new page order.',
@@ -78,6 +88,8 @@ const TOOL_INPUTS: Record<Tool, {
   },
   optimize: {
     accept: 'application/pdf',
+    cardDescription: 'Rebuild and compare file size.',
+    cardLabel: 'Optimize PDF',
     dropZoneLabel: 'PDF optimize upload drop zone',
     multiple: false,
     requirement: 'Drop or choose one PDF to optimize and compare file size.',
@@ -85,6 +97,8 @@ const TOOL_INPUTS: Record<Tool, {
   },
   sign: {
     accept: 'application/pdf',
+    cardDescription: 'Add text or handwritten signature.',
+    cardLabel: 'Sign PDF',
     dropZoneLabel: 'PDF signing upload drop zone',
     multiple: false,
     requirement: 'Drop or choose one PDF file.',
@@ -553,12 +567,18 @@ export default function App() {
       </section>
 
       <section className="tool-grid" aria-label="PDF tools">
-        <button className={tool === 'images' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('images')}>Images to PDF</button>
-        <button className={tool === 'merge' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('merge')}>Merge PDFs</button>
-        <button className={tool === 'split' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('split')}>Split PDF</button>
-        <button className={tool === 'reorder' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('reorder')}>Reorder Pages</button>
-        <button className={tool === 'optimize' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('optimize')}>Optimize PDF</button>
-        <button className={tool === 'sign' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('sign')}>Sign PDF</button>
+        {Object.entries(TOOL_INPUTS).map(([toolKey, config]) => (
+          <button
+            aria-label={config.cardLabel}
+            className={tool === toolKey ? 'tool-card active' : 'tool-card'}
+            key={toolKey}
+            type="button"
+            onClick={() => changeTool(toolKey as Tool)}
+          >
+            <span className="tool-card-title">{config.cardLabel}</span>
+            <span className="tool-card-description">{config.cardDescription}</span>
+          </button>
+        ))}
       </section>
 
       <section className="workspace" aria-live="polite">

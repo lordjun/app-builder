@@ -61,6 +61,17 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Sign PDF' })).toBeInTheDocument();
   });
 
+  it('shows short descriptions inside the tool cards', () => {
+    render(<App />);
+
+    expect(screen.getByText('Turn photos or scans into one PDF.')).toBeInTheDocument();
+    expect(screen.getByText('Combine PDFs in the order shown.')).toBeInTheDocument();
+    expect(screen.getByText('Keep only selected pages.')).toBeInTheDocument();
+    expect(screen.getByText('Set a new page order.')).toBeInTheDocument();
+    expect(screen.getByText('Rebuild and compare file size.')).toBeInTheDocument();
+    expect(screen.getByText('Add text or handwritten signature.')).toBeInTheDocument();
+  });
+
   it('links users to the feedback issue form', () => {
     render(<App />);
 
