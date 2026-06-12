@@ -5,6 +5,7 @@ import App from './App';
 import { createPdfFromImages } from './pdf/imageToPdf';
 import { downloadPdf } from './pdf/download';
 import { getPdfPageCount } from './pdf/pdfPageCount';
+import { optimizePdf } from './pdf/optimizePdf';
 import { reorderPdf } from './pdf/reorderPdf';
 import { signPdf } from './pdf/signPdf';
 import { splitPdf } from './pdf/splitPdf';
@@ -19,6 +20,14 @@ vi.mock('./pdf/download', () => ({
 
 vi.mock('./pdf/pdfPageCount', () => ({
   getPdfPageCount: vi.fn(async () => 4),
+}));
+
+vi.mock('./pdf/optimizePdf', () => ({
+  optimizePdf: vi.fn(async () => ({
+    bytes: new Uint8Array([13, 14, 15]),
+    optimizedSize: 300,
+    originalSize: 600,
+  })),
 }));
 
 vi.mock('./pdf/reorderPdf', () => ({
@@ -39,7 +48,7 @@ describe('App', () => {
     Reflect.deleteProperty(window, 'showDirectoryPicker');
   });
 
-  it('renders the product name, privacy promise, and five tool entries', () => {
+  it('renders the product name, privacy promise, and six tool entries', () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: 'Privacy PDF Toolbox' })).toBeInTheDocument();
@@ -48,6 +57,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Merge PDFs' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Split PDF' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reorder Pages' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Optimize PDF' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign PDF' })).toBeInTheDocument();
   });
 
@@ -102,6 +112,9 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
     expect(screen.getByText('Drop or choose one PDF, then enter the new page order.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Optimize PDF' }));
+    expect(screen.getByText('Drop or choose one PDF to optimize and compare file size.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign PDF' }));
     expect(screen.getByText('Drop or choose one PDF file.')).toBeInTheDocument();
@@ -475,6 +488,24 @@ describe('App', () => {
 
     await waitFor(() => expect(reorderPdf).toHaveBeenCalledWith(source, '3,1,2'));
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([10, 11, 12]), 'reordered.pdf');
+  });
+
+  it('optimizes a PDF after explicit confirmation and reports size change', async () => {
+    render(<App />);
+
+    const source = new File(['pdf'], 'source.pdf', { type: 'application/pdf' });
+    fireEvent.click(screen.getByRole('button', { name: 'Optimize PDF' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [source] },
+    });
+
+    expect(optimizePdf).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    await waitFor(() => expect(optimizePdf).toHaveBeenCalledWith(source));
+    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([13, 14, 15]), 'optimized.pdf');
+    expect(await screen.findByText(/Optimized source\.pdf\. Size changed from 600 B to 300 B/i)).toBeInTheDocument();
   });
 
   it('uses the custom output filename when processing files', async () => {

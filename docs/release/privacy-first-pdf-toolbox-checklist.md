@@ -50,6 +50,9 @@ Run the app locally and verify:
 - [ ] Reorder Pages prefills the natural page order after reading the selected PDF page count.
 - [ ] Reorder Pages disables processing and shows a clear warning for duplicate, missing, or out-of-range pages.
 - [ ] Reorder output keeps every page exactly once in the requested order.
+- [ ] Optimize PDF requires one PDF file.
+- [ ] Optimize PDF output opens as a valid PDF.
+- [ ] Optimize PDF success message shows before/after file size.
 - [ ] Sign PDF requires one PDF plus text or handwritten signature.
 - [ ] Text signature trims blank-only input before signing.
 - [ ] Handwritten signature can be cleared.

@@ -6,13 +6,14 @@ import { parsePageOrder } from './pdf/pageOrder';
 import { parsePageRanges } from './pdf/pageRanges';
 import { type SignaturePosition } from './pdf/signPdf';
 
-type Tool = 'images' | 'merge' | 'split' | 'reorder' | 'sign';
+type Tool = 'images' | 'merge' | 'split' | 'reorder' | 'optimize' | 'sign';
 
 const DEFAULT_OUTPUT_FILENAMES: Record<Tool, string> = {
   images: 'images-to-pdf.pdf',
   merge: 'merged.pdf',
   split: 'split.pdf',
   reorder: 'reordered.pdf',
+  optimize: 'optimized.pdf',
   sign: 'signed.pdf',
 };
 
@@ -73,6 +74,13 @@ const TOOL_INPUTS: Record<Tool, {
     dropZoneLabel: 'PDF reorder upload drop zone',
     multiple: false,
     requirement: 'Drop or choose one PDF, then enter the new page order.',
+    selectLabel: 'Select PDF',
+  },
+  optimize: {
+    accept: 'application/pdf',
+    dropZoneLabel: 'PDF optimize upload drop zone',
+    multiple: false,
+    requirement: 'Drop or choose one PDF to optimize and compare file size.',
     selectLabel: 'Select PDF',
   },
   sign: {
@@ -231,6 +239,11 @@ export default function App() {
         return;
       }
 
+      if (tool === 'optimize') {
+        await runOptimize(selectedFiles);
+        return;
+      }
+
       await runSign(selectedFiles);
     } finally {
       processingRef.current = false;
@@ -331,6 +344,30 @@ export default function App() {
       const bytes = await reorderPdf(pdfFile, trimmedPageOrder);
       const saveResult = await saveOutput(bytes, DEFAULT_OUTPUT_FILENAMES.reorder);
       setCompletedMessage(`Reordered pages in ${pdfFile.name}.`, saveResult);
+    });
+  }
+
+  async function runOptimize(files: File[]) {
+    await runSafely(async () => {
+      const validation = validateFiles(files);
+      if (!validation.valid) {
+        setValidationErrorMessage(validation.errors);
+        return;
+      }
+
+      const [pdfFile] = files.filter((file) => file.type === 'application/pdf');
+      if (!pdfFile) {
+        setMessage('Choose one PDF to optimize.');
+        return;
+      }
+
+      const { optimizePdf } = await import('./pdf/optimizePdf');
+      const result = await optimizePdf(pdfFile);
+      const saveResult = await saveOutput(result.bytes, DEFAULT_OUTPUT_FILENAMES.optimize);
+      setCompletedMessage(
+        `Optimized ${pdfFile.name}. Size changed from ${formatFileSize(result.originalSize)} to ${formatFileSize(result.optimizedSize)}.`,
+        saveResult
+      );
     });
   }
 
@@ -512,7 +549,7 @@ export default function App() {
           </a>
         </div>
         <h1 id="app-title">Privacy PDF Toolbox</h1>
-        <p className="lede">Create, merge, split, reorder, and sign PDFs in your browser. Files stay local by default.</p>
+        <p className="lede">Create, merge, split, reorder, optimize, and sign PDFs in your browser. Files stay local by default.</p>
       </section>
 
       <section className="tool-grid" aria-label="PDF tools">
@@ -520,6 +557,7 @@ export default function App() {
         <button className={tool === 'merge' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('merge')}>Merge PDFs</button>
         <button className={tool === 'split' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('split')}>Split PDF</button>
         <button className={tool === 'reorder' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('reorder')}>Reorder Pages</button>
+        <button className={tool === 'optimize' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('optimize')}>Optimize PDF</button>
         <button className={tool === 'sign' ? 'tool-card active' : 'tool-card'} type="button" onClick={() => changeTool('sign')}>Sign PDF</button>
       </section>
 
@@ -739,6 +777,14 @@ function getSelectedFileProblem(tool: Tool, files: File[]): string | null {
     }
 
     return files.length === 1 ? null : 'Keep one PDF file for reordering.';
+  }
+
+  if (tool === 'optimize') {
+    if (!files.every((file) => file.type === 'application/pdf')) {
+      return 'Use one PDF file for optimization.';
+    }
+
+    return files.length === 1 ? null : 'Keep one PDF file for optimization.';
   }
 
   if (!files.every((file) => file.type === 'application/pdf')) {

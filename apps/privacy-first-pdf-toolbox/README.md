@@ -1,6 +1,6 @@
 # Privacy PDF Toolbox
 
-Local-first PDF tools for images, merging, splitting, reordering, and signatures. The app runs in the browser and keeps source files local by default.
+Local-first PDF tools for images, merging, splitting, reordering, optimization, and signatures. The app runs in the browser and keeps source files local by default.
 
 ## Current MVP
 
@@ -8,6 +8,7 @@ Local-first PDF tools for images, merging, splitting, reordering, and signatures
 - Merge PDFs: accepts two or more PDF files and merges them in the displayed order.
 - Split PDF: accepts one PDF, lets the user enter page ranges such as `1-3,5`, and exports a new PDF with only those pages.
 - Reorder Pages: accepts one PDF, lets the user enter a complete page order such as `3,1,2,4`, and exports a reordered PDF.
+- Optimize PDF: accepts one PDF, rebuilds it locally, exports an optimized PDF, and reports before/after file size. Some PDFs may not get smaller.
 - Page count hint: Split PDF and Reorder Pages show the selected PDF page count to reduce page entry mistakes.
 - Page input defaults: Split PDF prefills `1-N`; Reorder Pages prefills `1,2,...,N` after reading the selected PDF page count.
 - Live page input validation: Split PDF and Reorder Pages disable processing and show page entry errors before export.
