@@ -643,172 +643,201 @@ export default function App() {
               <span>{inputConfig.category}</span>
             </div>
           </div>
-          <div className="trust-bar" aria-label="Processing and save status">
-            <p className="privacy-note">Files are processed in this browser tab, not uploaded to a server.</p>
-            <p className="save-status">Save destination: {saveDirectory ? 'Selected folder' : 'Downloads'}</p>
-          </div>
-          <div className="save-row">
-            {supportsDirectoryPicker ? (
-              <button className="secondary-button" type="button" onClick={() => void chooseSaveDirectory()}>
-                Choose save folder
-              </button>
-            ) : (
-              <p className="save-fallback">This browser will save through Downloads.</p>
-            )}
-            <span className="destination-label">{saveDirectory ? 'Custom folder selected' : 'No custom folder selected'}</span>
-          </div>
-          {tool !== 'sign' && filePicker}
-          {tool === 'split' && (
-            <label className="page-range-field">
-              Pages to keep
-              <input
-                aria-label="Pages to keep"
-                placeholder="1-3,5"
-                value={pageRanges}
-                onChange={(event) => setPageRanges(event.target.value)}
-              />
-            </label>
-          )}
-          {tool === 'reorder' && (
-            <label className="page-range-field">
-              New page order
-              <input
-                aria-label="New page order"
-                placeholder="3,1,2"
-                value={pageOrder}
-                onChange={(event) => setPageOrder(event.target.value)}
-              />
-            </label>
-          )}
-          {pdfPageCount !== null && (tool === 'split' || tool === 'reorder') && (
-            <p className="page-count-hint">This PDF has {pdfPageCount} page{pdfPageCount === 1 ? '' : 's'}.</p>
-          )}
-          {tool === 'sign' && (
-            <div className="signing-panel">
-              <label>
-                Signature text
-                <input value={signature} onChange={(event) => setSignature(event.target.value)} aria-label="Signature text" />
-              </label>
-              <div className="signature-pad">
-                <canvas
-                  aria-label="Handwritten signature pad"
-                  className="signature-canvas"
-                  height={160}
-                  ref={signatureCanvasRef}
-                  width={520}
-                  onPointerDown={startSignatureStroke}
-                  onPointerLeave={endSignatureStroke}
-                  onPointerMove={continueSignatureStroke}
-                  onPointerUp={endSignatureStroke}
-                />
-                <button className="secondary-button compact-button" type="button" onClick={clearSignatureCanvas}>
-                  Clear signature
-                </button>
+          <div className="workspace-grid">
+            <div className="task-column">
+              <div className="trust-bar" aria-label="Processing and save status">
+                <p className="privacy-note">Files are processed in this browser tab, not uploaded to a server.</p>
+                <p className="save-status">Save destination: {saveDirectory ? 'Selected folder' : 'Downloads'}</p>
               </div>
-              <fieldset className="position-options">
-                <legend>Signature position</legend>
-                <label>
+              {tool !== 'sign' && filePicker}
+              {tool === 'split' && (
+                <label className="page-range-field">
+                  Pages to keep
                   <input
-                    checked={signaturePosition === 'bottom-right'}
-                    name="signature-position"
-                    type="radio"
-                    value="bottom-right"
-                    onChange={() => setSignaturePosition('bottom-right')}
+                    aria-label="Pages to keep"
+                    placeholder="1-3,5"
+                    value={pageRanges}
+                    onChange={(event) => setPageRanges(event.target.value)}
                   />
-                  Bottom right
                 </label>
-                <label>
+              )}
+              {tool === 'reorder' && (
+                <label className="page-range-field">
+                  New page order
                   <input
-                    checked={signaturePosition === 'bottom-left'}
-                    name="signature-position"
-                    type="radio"
-                    value="bottom-left"
-                    onChange={() => setSignaturePosition('bottom-left')}
+                    aria-label="New page order"
+                    placeholder="3,1,2"
+                    value={pageOrder}
+                    onChange={(event) => setPageOrder(event.target.value)}
                   />
-                  Bottom left
                 </label>
-                <label>
-                  <input
-                    checked={signaturePosition === 'top-right'}
-                    name="signature-position"
-                    type="radio"
-                    value="top-right"
-                    onChange={() => setSignaturePosition('top-right')}
-                  />
-                  Top right
-                </label>
-                <label>
-                  <input
-                    checked={signaturePosition === 'top-left'}
-                    name="signature-position"
-                    type="radio"
-                    value="top-left"
-                    onChange={() => setSignaturePosition('top-left')}
-                  />
-                  Top left
-                </label>
-              </fieldset>
-              {filePicker}
+              )}
+              {pdfPageCount !== null && (tool === 'split' || tool === 'reorder') && (
+                <p className="page-count-hint">This PDF has {pdfPageCount} page{pdfPageCount === 1 ? '' : 's'}.</p>
+              )}
+              {tool === 'sign' && (
+                <div className="signing-panel">
+                  <label>
+                    Signature text
+                    <input value={signature} onChange={(event) => setSignature(event.target.value)} aria-label="Signature text" />
+                  </label>
+                  <div className="signature-pad">
+                    <canvas
+                      aria-label="Handwritten signature pad"
+                      className="signature-canvas"
+                      height={160}
+                      ref={signatureCanvasRef}
+                      width={520}
+                      onPointerDown={startSignatureStroke}
+                      onPointerLeave={endSignatureStroke}
+                      onPointerMove={continueSignatureStroke}
+                      onPointerUp={endSignatureStroke}
+                    />
+                    <button className="secondary-button compact-button" type="button" onClick={clearSignatureCanvas}>
+                      Clear signature
+                    </button>
+                  </div>
+                  <fieldset className="position-options">
+                    <legend>Signature position</legend>
+                    <label>
+                      <input
+                        checked={signaturePosition === 'bottom-right'}
+                        name="signature-position"
+                        type="radio"
+                        value="bottom-right"
+                        onChange={() => setSignaturePosition('bottom-right')}
+                      />
+                      Bottom right
+                    </label>
+                    <label>
+                      <input
+                        checked={signaturePosition === 'bottom-left'}
+                        name="signature-position"
+                        type="radio"
+                        value="bottom-left"
+                        onChange={() => setSignaturePosition('bottom-left')}
+                      />
+                      Bottom left
+                    </label>
+                    <label>
+                      <input
+                        checked={signaturePosition === 'top-right'}
+                        name="signature-position"
+                        type="radio"
+                        value="top-right"
+                        onChange={() => setSignaturePosition('top-right')}
+                      />
+                      Top right
+                    </label>
+                    <label>
+                      <input
+                        checked={signaturePosition === 'top-left'}
+                        name="signature-position"
+                        type="radio"
+                        value="top-left"
+                        onChange={() => setSignaturePosition('top-left')}
+                      />
+                      Top left
+                    </label>
+                  </fieldset>
+                  {filePicker}
+                </div>
+              )}
+              {selectedFiles.length > 0 && (
+                <section className="selected-files" aria-labelledby="selected-files-title">
+                  <h2 id="selected-files-title">Selected files</h2>
+                  <ol className="file-list">
+                    {selectedFiles.map((file, index) => (
+                      <li className="file-row" key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
+                        <div className="file-meta">
+                          <span className="file-name">{file.name}</span>
+                          <span className="file-detail">{formatFileSize(file.size)} | {file.type || 'unknown type'}</span>
+                        </div>
+                        <div className="file-actions">
+                          <button
+                            className="icon-button"
+                            type="button"
+                            aria-label={`Move ${file.name} up`}
+                            disabled={index === 0}
+                            onClick={() => moveFile(index, -1)}
+                          >
+                            <span aria-hidden="true">^</span>
+                          </button>
+                          <button
+                            className="icon-button"
+                            type="button"
+                            aria-label={`Move ${file.name} down`}
+                            disabled={index === selectedFiles.length - 1}
+                            onClick={() => moveFile(index, 1)}
+                          >
+                            <span aria-hidden="true">v</span>
+                          </button>
+                          <button className="icon-button danger" type="button" aria-label={`Remove ${file.name}`} onClick={() => removeFile(index)}>
+                            <span aria-hidden="true">x</span>
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
             </div>
-          )}
-          <label className="filename-field">
-            Output filename
-            <input
-              aria-label="Output filename"
-              value={outputFilename}
-              onChange={(event) => setOutputFilename(event.target.value)}
-            />
-          </label>
-          {selectedFiles.length > 0 && (
-            <section className="selected-files" aria-labelledby="selected-files-title">
-              <h2 id="selected-files-title">Selected files</h2>
-              <ol className="file-list">
-                {selectedFiles.map((file, index) => (
-                  <li className="file-row" key={`${file.name}-${file.size}-${file.lastModified}-${index}`}>
-                    <div className="file-meta">
-                      <span className="file-name">{file.name}</span>
-                      <span className="file-detail">{formatFileSize(file.size)} | {file.type || 'unknown type'}</span>
-                    </div>
-                    <div className="file-actions">
-                      <button
-                        className="icon-button"
-                        type="button"
-                        aria-label={`Move ${file.name} up`}
-                        disabled={index === 0}
-                        onClick={() => moveFile(index, -1)}
-                      >
-                        <span aria-hidden="true">^</span>
-                      </button>
-                      <button
-                        className="icon-button"
-                        type="button"
-                        aria-label={`Move ${file.name} down`}
-                        disabled={index === selectedFiles.length - 1}
-                        onClick={() => moveFile(index, 1)}
-                      >
-                        <span aria-hidden="true">v</span>
-                      </button>
-                      <button className="icon-button danger" type="button" aria-label={`Remove ${file.name}`} onClick={() => removeFile(index)}>
-                        <span aria-hidden="true">x</span>
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
-          <div className="action-row">
-            <button className="primary-button" type="button" disabled={!canStartProcessing} onClick={() => void runCurrentTool()}>
-              {isProcessing ? 'Processing...' : 'Start processing'}
-            </button>
-            {hasCompletedOutput && (
-              <button className="secondary-button follow-up-button" type="button" onClick={resetCurrentBatch}>
-                Process another batch
-              </button>
-            )}
+
+            <aside className="settings-panel" aria-label="Output setup">
+              <div>
+                <p className="panel-kicker">Output setup</p>
+                <h3>Ready when you confirm</h3>
+              </div>
+              <div className="setting-row">
+                <span>Tool</span>
+                <strong>{inputConfig.cardLabel}</strong>
+              </div>
+              <div className="setting-row">
+                <span>Mode</span>
+                <strong>{inputConfig.category}</strong>
+              </div>
+              <label className="filename-field">
+                Output filename
+                <input
+                  aria-label="Output filename"
+                  value={outputFilename}
+                  onChange={(event) => setOutputFilename(event.target.value)}
+                />
+              </label>
+              <div className="save-card">
+                <div>
+                  <span>Save to</span>
+                  <strong>{saveDirectory ? 'Selected folder' : 'Downloads folder'}</strong>
+                  <p>{saveDirectory ? 'Custom browser folder access is active.' : 'Uses the browser default Downloads location.'}</p>
+                </div>
+                {supportsDirectoryPicker ? (
+                  <button
+                    aria-label="Choose save folder"
+                    className="secondary-button compact-button"
+                    type="button"
+                    onClick={() => void chooseSaveDirectory()}
+                  >
+                    Change
+                  </button>
+                ) : (
+                  <p className="save-fallback">Downloads</p>
+                )}
+              </div>
+              <span className="destination-label">{saveDirectory ? 'Custom folder selected' : 'No custom folder selected'}</span>
+              <div className="action-row">
+                <button className="primary-button" type="button" disabled={!canStartProcessing} onClick={() => void runCurrentTool()}>
+                  {isProcessing ? 'Processing...' : 'Start processing'}
+                </button>
+                {hasCompletedOutput && (
+                  <button className="secondary-button follow-up-button" type="button" onClick={resetCurrentBatch}>
+                    Process another batch
+                  </button>
+                )}
+              </div>
+              {startProblem && <p className="input-warning">{startProblem}</p>}
+              <p className="status">{message}</p>
+            </aside>
           </div>
-          {startProblem && <p className="input-warning">{startProblem}</p>}
-          <p className="status">{message}</p>
         </section>
       </div>
     </main>
