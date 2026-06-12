@@ -10,6 +10,9 @@ node_modules/
 dist/
 **/dist/
 
+# Generated manual validation files
+apps/privacy-first-pdf-toolbox/validation-fixtures/
+
 # Logs
 *.log
 npm-debug.log*

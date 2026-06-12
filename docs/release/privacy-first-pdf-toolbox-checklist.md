@@ -52,7 +52,16 @@ If the old UI appears, hard refresh. If it still appears, clear site data for `1
 
 ## Test Files
 
-Prepare these files before manual validation:
+Generate standard validation files from `apps/privacy-first-pdf-toolbox`:
+
+```powershell
+$env:PATH='C:\Users\Lordjun\Documents\APP制作\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
+npm.cmd run fixtures
+```
+
+The generated files are written to `apps/privacy-first-pdf-toolbox/validation-fixtures/` and are ignored by git.
+
+Confirm these files exist before manual validation:
 
 - [ ] Two PNG or JPEG images with visibly different content.
 - [ ] Two small PDF files that open correctly.
