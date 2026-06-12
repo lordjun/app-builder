@@ -42,10 +42,12 @@ Run the app locally and verify:
 - [ ] Merge output follows the displayed file order.
 - [ ] Split PDF requires one PDF plus a page range such as `1-3,5`.
 - [ ] Split PDF shows the selected PDF page count.
+- [ ] Split PDF prefills the full page range after reading the selected PDF page count.
 - [ ] Split PDF disables processing and shows a clear warning for out-of-range pages.
 - [ ] Split output contains only the selected pages.
 - [ ] Reorder Pages requires one PDF plus a complete page order such as `3,1,2`.
 - [ ] Reorder Pages shows the selected PDF page count.
+- [ ] Reorder Pages prefills the natural page order after reading the selected PDF page count.
 - [ ] Reorder Pages disables processing and shows a clear warning for duplicate, missing, or out-of-range pages.
 - [ ] Reorder output keeps every page exactly once in the requested order.
 - [ ] Sign PDF requires one PDF plus text or handwritten signature.

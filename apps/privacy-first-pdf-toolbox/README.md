@@ -9,6 +9,7 @@ Local-first PDF tools for images, merging, splitting, reordering, and signatures
 - Split PDF: accepts one PDF, lets the user enter page ranges such as `1-3,5`, and exports a new PDF with only those pages.
 - Reorder Pages: accepts one PDF, lets the user enter a complete page order such as `3,1,2,4`, and exports a reordered PDF.
 - Page count hint: Split PDF and Reorder Pages show the selected PDF page count to reduce page entry mistakes.
+- Page input defaults: Split PDF prefills `1-N`; Reorder Pages prefills `1,2,...,N` after reading the selected PDF page count.
 - Live page input validation: Split PDF and Reorder Pages disable processing and show page entry errors before export.
 - Sign PDF: accepts one PDF and applies either text signature or handwritten signature on the first page.
 - Local save flow: defaults to browser Downloads, with optional folder selection in browsers that support the File System Access API.

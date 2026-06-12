@@ -140,7 +140,14 @@ export default function App() {
     const [pdfFile] = files;
     try {
       const { getPdfPageCount } = await import('./pdf/pdfPageCount');
-      setPdfPageCount(await getPdfPageCount(pdfFile));
+      const pageCount = await getPdfPageCount(pdfFile);
+      setPdfPageCount(pageCount);
+      if (tool === 'split') {
+        setPageRanges((currentValue) => currentValue.trim().length > 0 ? currentValue : `1-${pageCount}`);
+      }
+      if (tool === 'reorder') {
+        setPageOrder((currentValue) => currentValue.trim().length > 0 ? currentValue : makeDefaultPageOrder(pageCount));
+      }
     } catch {
       setPdfPageCount(null);
     }
@@ -789,6 +796,10 @@ function getSignatureProblem(tool: Tool, signature: string, hasHandwrittenSignat
   }
 
   return 'Add signature text or draw a signature.';
+}
+
+function makeDefaultPageOrder(pageCount: number): string {
+  return Array.from({ length: pageCount }, (_, index) => String(index + 1)).join(',');
 }
 
 function getCanvasPoint(canvas: HTMLCanvasElement, event: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } {

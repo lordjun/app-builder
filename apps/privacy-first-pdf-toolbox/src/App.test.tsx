@@ -323,7 +323,8 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
   });
 
-  it('requires a page range before splitting a PDF', () => {
+  it('requires a page range before splitting a PDF while the page count is not known', () => {
+    vi.mocked(getPdfPageCount).mockImplementationOnce(async () => new Promise<number>(() => undefined));
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Split PDF' }));
@@ -336,6 +337,20 @@ describe('App', () => {
 
     fireEvent.change(screen.getByLabelText('Pages to keep'), { target: { value: '1-3,5' } });
 
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
+  });
+
+  it('prefills the full page range after selecting a PDF for splitting', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Split PDF' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [new File(['pdf'], 'source.pdf', { type: 'application/pdf' })] },
+    });
+
+    await screen.findByText('This PDF has 4 pages.');
+
+    expect(screen.getByLabelText('Pages to keep')).toHaveValue('1-4');
     expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
   });
 
@@ -385,7 +400,8 @@ describe('App', () => {
     expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([7, 8, 9]), 'split.pdf');
   });
 
-  it('requires a page order before reordering a PDF', () => {
+  it('requires a page order before reordering a PDF while the page count is not known', () => {
+    vi.mocked(getPdfPageCount).mockImplementationOnce(async () => new Promise<number>(() => undefined));
     render(<App />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
@@ -398,6 +414,20 @@ describe('App', () => {
 
     fireEvent.change(screen.getByLabelText('New page order'), { target: { value: '3,1,2' } });
 
+    expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
+  });
+
+  it('prefills the natural page order after selecting a PDF for reordering', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [new File(['pdf'], 'source.pdf', { type: 'application/pdf' })] },
+    });
+
+    await screen.findByText('This PDF has 4 pages.');
+
+    expect(screen.getByLabelText('New page order')).toHaveValue('1,2,3,4');
     expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled();
   });
 
