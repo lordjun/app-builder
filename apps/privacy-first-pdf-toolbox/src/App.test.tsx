@@ -519,6 +519,26 @@ describe('App', () => {
     expect(await screen.findByText(/Optimized source\.pdf\. Size changed from 600 B to 300 B/i)).toBeInTheDocument();
   });
 
+  it('explains when an optimized PDF output is larger than the original', async () => {
+    vi.mocked(optimizePdf).mockResolvedValueOnce({
+      bytes: new Uint8Array([16, 17, 18]),
+      originalSize: 300,
+      optimizedSize: 600,
+    });
+
+    render(<App />);
+
+    const source = new File(['pdf'], 'source.pdf', { type: 'application/pdf' });
+    fireEvent.click(screen.getByRole('button', { name: 'Optimize PDF' }));
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [source] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    await waitFor(() => expect(optimizePdf).toHaveBeenCalledWith(source));
+    expect(await screen.findByText(/Optimized source\.pdf\. Output is 600 B, larger than the original 300 B\. This PDF may already be optimized\./i)).toBeInTheDocument();
+  });
+
   it('uses the custom output filename when processing files', async () => {
     render(<App />);
 

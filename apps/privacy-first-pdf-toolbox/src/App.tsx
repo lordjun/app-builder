@@ -379,7 +379,7 @@ export default function App() {
       const result = await optimizePdf(pdfFile);
       const saveResult = await saveOutput(result.bytes, DEFAULT_OUTPUT_FILENAMES.optimize);
       setCompletedMessage(
-        `Optimized ${pdfFile.name}. Size changed from ${formatFileSize(result.originalSize)} to ${formatFileSize(result.optimizedSize)}.`,
+        getOptimizeSummary(pdfFile.name, result.originalSize, result.optimizedSize),
         saveResult
       );
     });
@@ -762,6 +762,21 @@ function formatFileSize(size: number): string {
   }
 
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getOptimizeSummary(fileName: string, originalSize: number, optimizedSize: number): string {
+  const original = formatFileSize(originalSize);
+  const optimized = formatFileSize(optimizedSize);
+
+  if (optimizedSize < originalSize) {
+    return `Optimized ${fileName}. Size changed from ${original} to ${optimized}.`;
+  }
+
+  if (optimizedSize === originalSize) {
+    return `Optimized ${fileName}. Size stayed at ${optimized}. This PDF may already be optimized.`;
+  }
+
+  return `Optimized ${fileName}. Output is ${optimized}, larger than the original ${original}. This PDF may already be optimized.`;
 }
 
 function getSelectedFileProblem(tool: Tool, files: File[]): string | null {
