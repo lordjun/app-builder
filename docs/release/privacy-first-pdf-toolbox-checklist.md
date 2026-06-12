@@ -48,7 +48,7 @@ Open:
 http://127.0.0.1:5173/
 ```
 
-If the old UI appears, hard refresh. If it still appears, clear site data for `127.0.0.1` because the service worker caches the app shell.
+If the old UI appears, open `http://127.0.0.1:5173/?v=latest` to bypass the old app-shell cache. If the old UI still appears, clear site data for `127.0.0.1` because older MVP builds registered a service worker during local development.
 
 ## Test Files
 
@@ -146,7 +146,7 @@ Check at least one Chromium-based browser because custom save folder support dep
 - [ ] Selected folder save path writes the generated PDF.
 - [ ] Drag-and-drop file selection works.
 - [ ] Mobile-width layout keeps file rows and action buttons readable.
-- [ ] Service worker does not keep an old UI after a hard reload or site data reset.
+- [ ] Service worker does not keep an old UI after a cache-busting URL, hard reload, or site data reset.
 
 Known limitation:
 

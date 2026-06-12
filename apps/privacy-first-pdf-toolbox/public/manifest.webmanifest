@@ -1,7 +1,7 @@
 {
   "name": "Privacy PDF Toolbox",
   "short_name": "PDF Toolbox",
-  "description": "Local-first PDF tools for images, merging, and signatures.",
+  "description": "Local-first PDF tools for images, merging, splitting, reordering, optimization, and signatures.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
