@@ -72,6 +72,13 @@ describe('App', () => {
     expect(screen.getByText('Add text or handwritten signature.')).toBeInTheDocument();
   });
 
+  it('shows local processing and save destination status', () => {
+    render(<App />);
+
+    expect(screen.getByText('Files are processed in this browser tab, not uploaded to a server.')).toBeInTheDocument();
+    expect(screen.getByText('Save destination: Downloads')).toBeInTheDocument();
+  });
+
   it('links users to the feedback issue form', () => {
     render(<App />);
 

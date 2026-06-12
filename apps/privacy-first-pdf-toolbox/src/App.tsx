@@ -582,7 +582,10 @@ export default function App() {
       </section>
 
       <section className="workspace" aria-live="polite">
-        <p className="privacy-note">Processed locally in your browser. No upload step is used.</p>
+        <div className="trust-bar" aria-label="Processing and save status">
+          <p className="privacy-note">Files are processed in this browser tab, not uploaded to a server.</p>
+          <p className="save-status">Save destination: {saveDirectory ? 'Selected folder' : 'Downloads'}</p>
+        </div>
         <div className="save-row">
           {supportsDirectoryPicker ? (
             <button className="secondary-button" type="button" onClick={() => void chooseSaveDirectory()}>
