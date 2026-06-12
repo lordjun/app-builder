@@ -88,6 +88,19 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Split PDF' })).toBeInTheDocument();
   });
 
+  it('uses tool-specific primary action copy while keeping one confirmation action name', () => {
+    render(<App />);
+
+    expect(screen.getByRole('button', { name: 'Start processing' })).toHaveTextContent('Convert to PDF');
+    expect(screen.getByText('0 files selected')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Merge PDFs' }));
+    expect(screen.getByRole('button', { name: 'Start processing' })).toHaveTextContent('Merge PDFs');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
+    expect(screen.getByRole('button', { name: 'Start processing' })).toHaveTextContent('Apply page order');
+  });
+
   it('shows local processing and save destination status', () => {
     render(<App />);
 

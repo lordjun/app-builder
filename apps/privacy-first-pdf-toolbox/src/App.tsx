@@ -154,6 +154,11 @@ export default function App() {
   const signatureProblem = selectedFiles.length > 0 ? getSignatureProblem(tool, signature, hasHandwrittenSignature) : null;
   const startProblem = selectedFileProblem ?? pageRangeProblem ?? pageOrderProblem ?? signatureProblem;
   const canStartProcessing = selectedFiles.length > 0 && !startProblem && !isProcessing;
+  const primaryActionLabel = getPrimaryActionLabel(tool);
+  const selectedFileCountLabel = `${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'} selected`;
+  const selectedFileSizeLabel = selectedFiles.length > 0
+    ? `${formatFileSize(selectedFiles.reduce((totalSize, file) => totalSize + file.size, 0))} total`
+    : 'Waiting for source files';
 
   function changeTool(nextTool: Tool) {
     setTool(nextTool);
@@ -743,6 +748,13 @@ export default function App() {
                   {filePicker}
                 </div>
               )}
+              <div className={selectedFiles.length > 0 ? 'file-batch-summary ready' : 'file-batch-summary'}>
+                <div>
+                  <strong>{selectedFileCountLabel}</strong>
+                  <span>{selectedFileSizeLabel}</span>
+                </div>
+                <span>{selectedFiles.length > 0 ? (startProblem ? 'Needs attention' : 'Ready to process') : 'No files added'}</span>
+              </div>
               {selectedFiles.length > 0 && (
                 <section className="selected-files" aria-labelledby="selected-files-title">
                   <h2 id="selected-files-title">Selected files</h2>
@@ -825,8 +837,14 @@ export default function App() {
               </div>
               <span className="destination-label">{saveDirectory ? 'Custom folder selected' : 'No custom folder selected'}</span>
               <div className="action-row">
-                <button className="primary-button" type="button" disabled={!canStartProcessing} onClick={() => void runCurrentTool()}>
-                  {isProcessing ? 'Processing...' : 'Start processing'}
+                <button
+                  aria-label={isProcessing ? 'Processing...' : 'Start processing'}
+                  className="primary-button"
+                  type="button"
+                  disabled={!canStartProcessing}
+                  onClick={() => void runCurrentTool()}
+                >
+                  {isProcessing ? 'Processing...' : primaryActionLabel}
                 </button>
                 {hasCompletedOutput && (
                   <button className="secondary-button follow-up-button" type="button" onClick={resetCurrentBatch}>
@@ -973,6 +991,30 @@ function getSignatureProblem(tool: Tool, signature: string, hasHandwrittenSignat
   }
 
   return 'Add signature text or draw a signature.';
+}
+
+function getPrimaryActionLabel(tool: Tool): string {
+  if (tool === 'images') {
+    return 'Convert to PDF';
+  }
+
+  if (tool === 'merge') {
+    return 'Merge PDFs';
+  }
+
+  if (tool === 'split') {
+    return 'Split PDF';
+  }
+
+  if (tool === 'reorder') {
+    return 'Apply page order';
+  }
+
+  if (tool === 'optimize') {
+    return 'Optimize PDF';
+  }
+
+  return 'Sign PDF';
 }
 
 function makeDefaultPageOrder(pageCount: number): string {
