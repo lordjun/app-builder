@@ -20,7 +20,7 @@ Suggested commands from the repository root:
 Run from `apps/privacy-first-pdf-toolbox`:
 
 ```powershell
-$env:PATH='C:\Users\Lordjun\Documents\APP制作\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
+$env:PATH='..\..\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
 npm.cmd test
 npm.cmd run build
 ```
@@ -38,7 +38,7 @@ Pass criteria:
 Run from `apps/privacy-first-pdf-toolbox`:
 
 ```powershell
-$env:PATH='C:\Users\Lordjun\Documents\APP制作\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
+$env:PATH='..\..\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
 npm.cmd run dev -- --port 5173
 ```
 
@@ -55,7 +55,7 @@ If the old UI appears, hard refresh. If it still appears, clear site data for `1
 Generate standard validation files from `apps/privacy-first-pdf-toolbox`:
 
 ```powershell
-$env:PATH='C:\Users\Lordjun\Documents\APP制作\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
+$env:PATH='..\..\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
 npm.cmd run fixtures
 ```
 
