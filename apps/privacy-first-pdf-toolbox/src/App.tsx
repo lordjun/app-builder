@@ -98,13 +98,13 @@ const TOOL_INPUTS: Record<Tool, {
   },
   optimize: {
     accept: 'application/pdf',
-    cardDescription: 'Rebuild and compare file size.',
+    cardDescription: 'Try to reduce PDF file size.',
     cardLabel: 'Optimize PDF',
     category: 'Optimize',
     dropZoneLabel: 'PDF optimize upload drop zone',
     icon: 'ZIP',
     multiple: false,
-    requirement: 'Drop or choose one PDF to optimize and compare file size.',
+    requirement: 'Drop or choose one PDF. The app will try to reduce file size and show before/after.',
     selectLabel: 'Select PDF',
   },
   sign: {

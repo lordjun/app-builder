@@ -68,7 +68,7 @@ describe('App', () => {
     expect(screen.getByText('Combine PDFs in the order shown.')).toBeInTheDocument();
     expect(screen.getByText('Keep only selected pages.')).toBeInTheDocument();
     expect(screen.getByText('Set a new page order.')).toBeInTheDocument();
-    expect(screen.getByText('Rebuild and compare file size.')).toBeInTheDocument();
+    expect(screen.getByText('Try to reduce PDF file size.')).toBeInTheDocument();
     expect(screen.getByText('Add text or handwritten signature.')).toBeInTheDocument();
   });
 
@@ -161,7 +161,7 @@ describe('App', () => {
     expect(screen.getByText('Drop or choose one PDF, then enter the new page order.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Optimize PDF' }));
-    expect(screen.getByText('Drop or choose one PDF to optimize and compare file size.')).toBeInTheDocument();
+    expect(screen.getByText('Drop or choose one PDF. The app will try to reduce file size and show before/after.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign PDF' }));
     expect(screen.getByText('Drop or choose one PDF file.')).toBeInTheDocument();
