@@ -1,19 +1,19 @@
 # Privacy PDF Toolbox Deploy Handoff
 
-This is the final pre-push handoff for manually publishing the Privacy PDF Toolbox MVP.
+This is the pre-push handoff for manually publishing the Privacy PDF Toolbox MVP.
 
 ## Local Push State
 
-Current local `main` has been pushed and is synced with `origin/main`.
+Before pushing, confirm whether local `main` is ahead of `origin/main`; Codex may have created local verification or polish commits that still need a manual push.
 
-Latest relevant commits:
+Recent relevant commits at the time this handoff was last updated:
 
 ```text
+183868f Polish PDF toolbox workflow feedback
+ca9aa0c Elevate PDF toolbox professional UI
+ff778ac Polish PDF toolbox commercial UI
+77d1152 Refresh PDF toolbox workbench UI
 22def4a Update remaining Pages workflow actions
-d9ab3ba Update Pages deploy action to Node 24
-8f137c8 Add PDF toolbox deploy handoff
-942971e Fix PDF toolbox Pages asset paths
-27d59dc Document PDF toolbox release checklist
 ```
 
 Codex should not push future commits unless the user explicitly changes the current no-push instruction.
@@ -64,7 +64,10 @@ After deployment opens:
 - [ ] Tool buttons show `Images to PDF`, `Merge PDFs`, and `Sign PDF`.
 - [ ] Browser dev tools Network panel does not show failed requests for `/assets/...`, `/manifest.webmanifest`, `/icon.svg`, or `/sw.js` at the domain root.
 - [ ] `Images to PDF` shows `Drop or choose PNG/JPEG images.`
+- [ ] The main confirmation button for Images to PDF is visibly labeled `Convert to PDF`.
+- [ ] The workspace shows `Output setup` and `0 files selected` before upload.
 - [ ] `Merge PDFs` shows `Drop or choose at least two PDF files.`
+- [ ] `Reorder Pages` shows a confirmation button labeled `Apply page order`.
 - [ ] `Sign PDF` shows the signature text input, signature pad, and PDF upload zone.
 
 ## Release Gate
@@ -79,8 +82,9 @@ npm run build
 
 Current verified state before this handoff:
 
-- 9 Vitest files passed.
-- 39 tests passed.
+- Validation fixtures generated successfully with `npm run fixtures`.
+- 15 Vitest files passed.
+- 69 tests passed.
 - Production build completed.
 - `dist/index.html`, `dist/manifest.webmanifest`, and `dist/sw.js` use relative app-shell paths.
 

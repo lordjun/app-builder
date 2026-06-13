@@ -21,12 +21,14 @@ Run from `apps/privacy-first-pdf-toolbox`:
 
 ```powershell
 $env:PATH='..\..\.tools\node\node-v24.16.0-win-x64;' + $env:PATH
+npm.cmd run fixtures
 npm.cmd test
 npm.cmd run build
 ```
 
 Pass criteria:
 
+- [ ] Validation fixtures are generated in `validation-fixtures/`.
 - [ ] Vitest reports all test files passed.
 - [ ] TypeScript compilation completes without errors.
 - [ ] Vite production build completes and writes `dist/`.
@@ -79,7 +81,9 @@ First-screen checks:
 - [ ] Each tool card has a short description.
 - [ ] Workspace states: `Files are processed in this browser tab, not uploaded to a server.`
 - [ ] Workspace shows `Save destination: Downloads` before choosing a custom folder.
-- [ ] Processing requires the user to click `Start processing`.
+- [ ] `Output setup` panel shows tool, mode, output filename, save destination, and the confirmation button.
+- [ ] File batch summary shows `0 files selected` before upload and updates after source files are selected.
+- [ ] Processing requires the user to click the primary confirmation button. Its visible label should match the tool, such as `Convert to PDF`, `Merge PDFs`, `Apply page order`, or `Sign PDF`.
 - [ ] Unsupported file types show a clear warning before processing.
 - [ ] Files over 25 MB show a recoverable validation message.
 
@@ -87,7 +91,7 @@ Images to PDF:
 
 - [ ] Select at least two PNG/JPEG files.
 - [ ] Reorder the selected images before processing.
-- [ ] Click `Start processing`.
+- [ ] Click `Convert to PDF`.
 - [ ] Output opens as a valid PDF.
 - [ ] Output page order matches the displayed image order.
 
@@ -96,7 +100,7 @@ Merge PDFs:
 - [ ] Select only one PDF and confirm processing stays disabled or shows the minimum-file requirement.
 - [ ] Select at least two PDFs.
 - [ ] Reorder the displayed files.
-- [ ] Click `Start processing`.
+- [ ] Click `Merge PDFs`.
 - [ ] Output opens as a valid PDF.
 - [ ] Output page order follows the displayed file order.
 
@@ -106,7 +110,7 @@ Split PDF:
 - [ ] Confirm the selected PDF page count appears.
 - [ ] Confirm the page range is prefilled as `1-4`.
 - [ ] Enter `1-3,5` and confirm processing is disabled or shows an out-of-range warning.
-- [ ] Enter `1-2,4`, click `Start processing`, and confirm the output contains only pages 1, 2, and 4.
+- [ ] Enter `1-2,4`, click `Split PDF`, and confirm the output contains only pages 1, 2, and 4.
 
 Reorder Pages:
 
@@ -114,12 +118,12 @@ Reorder Pages:
 - [ ] Confirm the selected PDF page count appears.
 - [ ] Confirm the page order is prefilled as `1,2,3,4`.
 - [ ] Enter `3,1,2` and confirm processing is disabled or shows a missing-page warning.
-- [ ] Enter `3,1,2,4`, click `Start processing`, and confirm the output keeps every page exactly once in that order.
+- [ ] Enter `3,1,2,4`, click `Apply page order`, and confirm the output keeps every page exactly once in that order.
 
 Optimize PDF:
 
 - [ ] Select one PDF file.
-- [ ] Click `Start processing`.
+- [ ] Click `Optimize PDF`.
 - [ ] Output opens as a valid PDF.
 - [ ] Success message shows before/after file size.
 - [ ] If output is larger or unchanged, the message explains that the PDF may already be optimized.
@@ -127,7 +131,7 @@ Optimize PDF:
 Sign PDF:
 
 - [ ] Select one PDF and enter a text signature.
-- [ ] Click `Start processing` and confirm the output opens with a visible signature.
+- [ ] Click `Sign PDF` and confirm the output opens with a visible signature.
 - [ ] Try blank-only text and confirm processing is disabled or shows a clear warning unless a handwritten signature exists.
 - [ ] Draw a handwritten signature and confirm it can be cleared.
 
