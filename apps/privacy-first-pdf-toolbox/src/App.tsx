@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react';
-import { downloadPdf } from './pdf/download';
+import { downloadBytes } from './pdf/download';
 import { validateFiles } from './pdf/fileValidation';
-import { normalizePdfFilename } from './pdf/outputFilename';
+import { normalizeOutputFilename } from './pdf/outputFilename';
 import { parsePageOrder } from './pdf/pageOrder';
 import { parsePageRanges } from './pdf/pageRanges';
 import { type SignaturePosition } from './pdf/signPdf';
 
-type Tool = 'images' | 'merge' | 'split' | 'reorder' | 'optimize' | 'sign';
+type Tool = 'images' | 'merge' | 'split' | 'reorder' | 'optimize' | 'edit' | 'sign';
 
 const DEFAULT_OUTPUT_FILENAMES: Record<Tool, string> = {
   images: 'images-to-pdf.pdf',
@@ -14,6 +14,7 @@ const DEFAULT_OUTPUT_FILENAMES: Record<Tool, string> = {
   split: 'split.pdf',
   reorder: 'reordered.pdf',
   optimize: 'optimized.pdf',
+  edit: 'editable-pdf.pptx',
   sign: 'signed.pdf',
 };
 
@@ -107,6 +108,17 @@ const TOOL_INPUTS: Record<Tool, {
     requirement: 'Drop or choose one PDF. The app will try to reduce file size and show before/after.',
     selectLabel: 'Select PDF',
   },
+  edit: {
+    accept: 'application/pdf',
+    cardDescription: 'Convert PDF text into editable slides.',
+    cardLabel: 'Edit PDF',
+    category: 'Optimize',
+    dropZoneLabel: 'PDF edit upload drop zone',
+    icon: 'TXT',
+    multiple: false,
+    requirement: 'Drop or choose one text-based PDF. The app creates an editable PPTX you can edit and export back to PDF.',
+    selectLabel: 'Select PDF',
+  },
   sign: {
     accept: 'application/pdf',
     cardDescription: 'Add text or handwritten signature.',
@@ -123,7 +135,7 @@ const TOOL_INPUTS: Record<Tool, {
 const TOOL_CATEGORIES: Array<{ label: string; tools: Tool[] }> = [
   { label: 'Create', tools: ['images'] },
   { label: 'Organize', tools: ['merge', 'split', 'reorder'] },
-  { label: 'Optimize', tools: ['optimize'] },
+  { label: 'Optimize', tools: ['optimize', 'edit'] },
   { label: 'Sign', tools: ['sign'] },
 ];
 
@@ -284,6 +296,11 @@ export default function App() {
         return;
       }
 
+      if (tool === 'edit') {
+        await runEdit(selectedFiles);
+        return;
+      }
+
       await runSign(selectedFiles);
     } finally {
       processingRef.current = false;
@@ -411,6 +428,35 @@ export default function App() {
     });
   }
 
+  async function runEdit(files: File[]) {
+    await runSafely(async () => {
+      const validation = validateFiles(files);
+      if (!validation.valid) {
+        setValidationErrorMessage(validation.errors);
+        return;
+      }
+
+      const [pdfFile] = files.filter((file) => file.type === 'application/pdf');
+      if (!pdfFile) {
+        setMessage('Choose one PDF to convert into an editable PPTX.');
+        return;
+      }
+
+      const { convertPdfToEditablePptx } = await import('./pdf/pdfToEditablePptx');
+      const result = await convertPdfToEditablePptx(pdfFile);
+      const saveResult = await saveOutput(
+        result.bytes,
+        DEFAULT_OUTPUT_FILENAMES.edit,
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'pptx'
+      );
+      setCompletedMessage(
+        `Created an editable PPTX from ${result.pageCount} PDF page${result.pageCount === 1 ? '' : 's'} with ${result.textItemCount} text layer item${result.textItemCount === 1 ? '' : 's'}. Edit the PPTX, then export it back to PDF from your presentation app.`,
+        saveResult
+      );
+    });
+  }
+
   async function runSign(files: File[]) {
     await runSafely(async () => {
       const validation = validateFiles(files);
@@ -510,10 +556,10 @@ export default function App() {
     return new Uint8Array(await blob.arrayBuffer());
   }
 
-  async function saveOutput(bytes: Uint8Array, filename: string): Promise<SaveResult> {
-    const normalizedFilename = normalizePdfFilename(outputFilename, filename);
+  async function saveOutput(bytes: Uint8Array, filename: string, mimeType = 'application/pdf', extension = 'pdf'): Promise<SaveResult> {
+    const normalizedFilename = normalizeOutputFilename(outputFilename, filename, extension);
     if (!saveDirectory) {
-      downloadPdf(bytes, normalizedFilename);
+      downloadBytes(bytes, normalizedFilename, mimeType);
       return {
         destination: 'downloads',
         filename: normalizedFilename,
@@ -522,7 +568,7 @@ export default function App() {
 
     const fileHandle = await saveDirectory.getFileHandle(normalizedFilename, { create: true });
     const writable = await fileHandle.createWritable();
-    await writable.write(new Blob([toArrayBuffer(bytes)], { type: 'application/pdf' }));
+    await writable.write(new Blob([toArrayBuffer(bytes)], { type: mimeType }));
     await writable.close();
     return {
       destination: 'selected-folder',
@@ -655,6 +701,12 @@ export default function App() {
                 <p className="save-status">Save destination: {saveDirectory ? 'Selected folder' : 'Downloads'}</p>
               </div>
               {tool !== 'sign' && filePicker}
+              {tool === 'edit' && (
+                <div className="workflow-note">
+                  <strong>How editing works</strong>
+                  <p>This creates a PowerPoint file from the PDF text layer. Edit the PPTX in PowerPoint, Keynote, or LibreOffice, then export it back to PDF. Scanned pages need OCR first.</p>
+                </div>
+              )}
               {tool === 'split' && (
                 <label className="page-range-field">
                   Pages to keep
@@ -936,6 +988,14 @@ function getSelectedFileProblem(tool: Tool, files: File[]): string | null {
     return files.length === 1 ? null : 'Keep one PDF file for optimization.';
   }
 
+  if (tool === 'edit') {
+    if (!files.every((file) => file.type === 'application/pdf')) {
+      return 'Use one PDF file for editable conversion.';
+    }
+
+    return files.length === 1 ? null : 'Keep one PDF file for editable conversion.';
+  }
+
   if (!files.every((file) => file.type === 'application/pdf')) {
     return 'Use one PDF file for signing.';
   }
@@ -1012,6 +1072,10 @@ function getPrimaryActionLabel(tool: Tool): string {
 
   if (tool === 'optimize') {
     return 'Optimize PDF';
+  }
+
+  if (tool === 'edit') {
+    return 'Create editable PPTX';
   }
 
   return 'Sign PDF';

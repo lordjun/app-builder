@@ -2,6 +2,10 @@
 .tools/
 .git-upload/
 .superpowers/
+.npm-cache*/
+**/.npm-cache/
+**/.tmp-*/
+**/.vite-dev*.log
 
 # Node dependencies
 node_modules/

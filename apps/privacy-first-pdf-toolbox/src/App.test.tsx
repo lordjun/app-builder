@@ -3,9 +3,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { createPdfFromImages } from './pdf/imageToPdf';
-import { downloadPdf } from './pdf/download';
+import { downloadBytes } from './pdf/download';
 import { getPdfPageCount } from './pdf/pdfPageCount';
 import { optimizePdf } from './pdf/optimizePdf';
+import { convertPdfToEditablePptx } from './pdf/pdfToEditablePptx';
 import { reorderPdf } from './pdf/reorderPdf';
 import { signPdf } from './pdf/signPdf';
 import { splitPdf } from './pdf/splitPdf';
@@ -15,7 +16,7 @@ vi.mock('./pdf/imageToPdf', () => ({
 }));
 
 vi.mock('./pdf/download', () => ({
-  downloadPdf: vi.fn(),
+  downloadBytes: vi.fn(),
 }));
 
 vi.mock('./pdf/pdfPageCount', () => ({
@@ -27,6 +28,14 @@ vi.mock('./pdf/optimizePdf', () => ({
     bytes: new Uint8Array([13, 14, 15]),
     optimizedSize: 300,
     originalSize: 600,
+  })),
+}));
+
+vi.mock('./pdf/pdfToEditablePptx', () => ({
+  convertPdfToEditablePptx: vi.fn(async () => ({
+    bytes: new Uint8Array([21, 22, 23]),
+    pageCount: 2,
+    textItemCount: 18,
   })),
 }));
 
@@ -48,7 +57,7 @@ describe('App', () => {
     Reflect.deleteProperty(window, 'showDirectoryPicker');
   });
 
-  it('renders the product name, privacy promise, and six tool entries', () => {
+  it('renders the product name, privacy promise, and seven tool entries', () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: 'Privacy PDF Toolbox' })).toBeInTheDocument();
@@ -58,6 +67,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Split PDF' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reorder Pages' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Optimize PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit PDF' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign PDF' })).toBeInTheDocument();
   });
 
@@ -69,6 +79,7 @@ describe('App', () => {
     expect(screen.getByText('Keep only selected pages.')).toBeInTheDocument();
     expect(screen.getByText('Set a new page order.')).toBeInTheDocument();
     expect(screen.getByText('Try to reduce PDF file size.')).toBeInTheDocument();
+    expect(screen.getByText('Convert PDF text into editable slides.')).toBeInTheDocument();
     expect(screen.getByText('Add text or handwritten signature.')).toBeInTheDocument();
   });
 
@@ -99,6 +110,9 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Reorder Pages' }));
     expect(screen.getByRole('button', { name: 'Start processing' })).toHaveTextContent('Apply page order');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit PDF' }));
+    expect(screen.getByRole('button', { name: 'Start processing' })).toHaveTextContent('Create editable PPTX');
   });
 
   it('shows local processing and save destination status', () => {
@@ -126,12 +140,12 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Select images'), { target: { files: [image] } });
 
     expect(createPdfFromImages).not.toHaveBeenCalled();
-    expect(downloadPdf).not.toHaveBeenCalled();
+    expect(downloadBytes).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
 
     await waitFor(() => expect(createPdfFromImages).toHaveBeenCalledWith([image]));
-    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'images-to-pdf.pdf');
+    expect(downloadBytes).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'images-to-pdf.pdf', 'application/pdf');
   });
 
   it('accepts files dropped on the upload zone', () => {
@@ -162,6 +176,9 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Optimize PDF' }));
     expect(screen.getByText('Drop or choose one PDF. The app will try to reduce file size and show before/after.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit PDF' }));
+    expect(screen.getByText('Drop or choose one text-based PDF. The app creates an editable PPTX you can edit and export back to PDF.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sign PDF' }));
     expect(screen.getByText('Drop or choose one PDF file.')).toBeInTheDocument();
@@ -251,7 +268,7 @@ describe('App', () => {
     finishProcessing?.(new Uint8Array([7, 8, 9]));
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Start processing' })).toBeEnabled());
-    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([7, 8, 9]), 'images-to-pdf.pdf');
+    expect(downloadBytes).toHaveBeenCalledWith(new Uint8Array([7, 8, 9]), 'images-to-pdf.pdf', 'application/pdf');
   });
 
   it('explains how to recover from file validation errors', async () => {
@@ -364,7 +381,7 @@ describe('App', () => {
       text: 'Jane Doe',
       position: 'top-left',
     }));
-    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([4, 5, 6]), 'signed.pdf');
+    expect(downloadBytes).toHaveBeenCalledWith(new Uint8Array([4, 5, 6]), 'signed.pdf', 'application/pdf');
   });
 
   it('requires signature text or handwriting before signing a PDF', () => {
@@ -457,7 +474,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
 
     await waitFor(() => expect(splitPdf).toHaveBeenCalledWith(source, '1-3,5'));
-    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([7, 8, 9]), 'split.pdf');
+    expect(downloadBytes).toHaveBeenCalledWith(new Uint8Array([7, 8, 9]), 'split.pdf', 'application/pdf');
   });
 
   it('requires a page order before reordering a PDF while the page count is not known', () => {
@@ -534,7 +551,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
 
     await waitFor(() => expect(reorderPdf).toHaveBeenCalledWith(source, '3,1,2'));
-    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([10, 11, 12]), 'reordered.pdf');
+    expect(downloadBytes).toHaveBeenCalledWith(new Uint8Array([10, 11, 12]), 'reordered.pdf', 'application/pdf');
   });
 
   it('optimizes a PDF after explicit confirmation and reports size change', async () => {
@@ -551,7 +568,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
 
     await waitFor(() => expect(optimizePdf).toHaveBeenCalledWith(source));
-    expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([13, 14, 15]), 'optimized.pdf');
+    expect(downloadBytes).toHaveBeenCalledWith(new Uint8Array([13, 14, 15]), 'optimized.pdf', 'application/pdf');
     expect(await screen.findByText(/Optimized source\.pdf\. Size changed from 600 B to 300 B/i)).toBeInTheDocument();
   });
 
@@ -575,6 +592,32 @@ describe('App', () => {
     expect(await screen.findByText(/Optimized source\.pdf\. Output is 600 B, larger than the original 300 B\. This PDF may already be optimized\./i)).toBeInTheDocument();
   });
 
+  it('explains the editable PDF workflow and creates a PPTX after confirmation', async () => {
+    render(<App />);
+
+    const source = new File(['pdf'], 'source.pdf', { type: 'application/pdf' });
+    fireEvent.click(screen.getByRole('button', { name: 'Edit PDF' }));
+
+    expect(screen.getByText('How editing works')).toBeInTheDocument();
+    expect(screen.getByText(/Edit the PPTX in PowerPoint, Keynote, or LibreOffice/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Select PDF'), {
+      target: { files: [source] },
+    });
+
+    expect(convertPdfToEditablePptx).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
+
+    await waitFor(() => expect(convertPdfToEditablePptx).toHaveBeenCalledWith(source));
+    expect(downloadBytes).toHaveBeenCalledWith(
+      new Uint8Array([21, 22, 23]),
+      'editable-pdf.pptx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
+    expect(await screen.findByText(/Created an editable PPTX from 2 PDF pages with 18 text layer items/i)).toBeInTheDocument();
+  });
+
   it('uses the custom output filename when processing files', async () => {
     render(<App />);
 
@@ -584,6 +627,6 @@ describe('App', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Start processing' }));
 
-    await waitFor(() => expect(downloadPdf).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'client-report-final.pdf'));
+    await waitFor(() => expect(downloadBytes).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'client-report-final.pdf', 'application/pdf'));
   });
 });

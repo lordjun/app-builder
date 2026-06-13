@@ -4,14 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "tsc && vite build",
+    "dev": "node scripts/vite-dev.mjs",
+    "build": "tsc && node scripts/vite-build.mjs",
     "fixtures": "node scripts/create-validation-fixtures.mjs",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --environment jsdom --globals",
+    "test:watch": "vitest --environment jsdom --globals"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^3.11.174",
+    "pptxgenjs": "^4.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

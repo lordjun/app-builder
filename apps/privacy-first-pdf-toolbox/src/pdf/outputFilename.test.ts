@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizePdfFilename } from './outputFilename';
+import { normalizeOutputFilename, normalizePdfFilename } from './outputFilename';
 
 describe('normalizePdfFilename', () => {
   it('adds the pdf extension when it is missing', () => {
@@ -16,5 +16,15 @@ describe('normalizePdfFilename', () => {
 
   it('replaces path-unsafe characters', () => {
     expect(normalizePdfFilename('client/report:final', 'signed.pdf')).toBe('client-report-final.pdf');
+  });
+});
+
+describe('normalizeOutputFilename', () => {
+  it('adds a custom output extension', () => {
+    expect(normalizeOutputFilename('editable-report', 'converted.pptx', 'pptx')).toBe('editable-report.pptx');
+  });
+
+  it('keeps an existing custom output extension', () => {
+    expect(normalizeOutputFilename('editable-report.pptx', 'converted.pptx', 'pptx')).toBe('editable-report.pptx');
   });
 });

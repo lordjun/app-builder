@@ -1,5 +1,5 @@
-export function downloadPdf(bytes: Uint8Array, filename: string): void {
-  const blob = new Blob([toArrayBuffer(bytes)], { type: 'application/pdf' });
+export function downloadBytes(bytes: Uint8Array, filename: string, mimeType: string): void {
+  const blob = new Blob([toArrayBuffer(bytes)], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -8,6 +8,10 @@ export function downloadPdf(bytes: Uint8Array, filename: string): void {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+export function downloadPdf(bytes: Uint8Array, filename: string): void {
+  downloadBytes(bytes, filename, 'application/pdf');
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {

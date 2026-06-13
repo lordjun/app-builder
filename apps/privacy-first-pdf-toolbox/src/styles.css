@@ -377,6 +377,26 @@ h2 {
   line-height: 1.45;
 }
 
+.workflow-note {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid #d7dee3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #40515c;
+  line-height: 1.45;
+}
+
+.workflow-note strong {
+  color: #172026;
+}
+
+.workflow-note p {
+  margin: 0;
+}
+
 .file-picker,
 .filename-field,
 .page-range-field,
