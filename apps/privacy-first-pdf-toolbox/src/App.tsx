@@ -869,7 +869,10 @@ export default function App() {
                 />
               </label>
               <div className="save-card">
-                <div>
+                <div
+                  className="save-card-copy"
+                  aria-label={`Save to ${saveDirectory ? 'Selected folder' : 'Downloads folder'}`}
+                >
                   <span>Save to</span>
                   <strong>{saveDirectory ? 'Selected folder' : 'Downloads folder'}</strong>
                   <p>{saveDirectory ? 'Custom browser folder access is active.' : 'Uses the browser default Downloads location.'}</p>

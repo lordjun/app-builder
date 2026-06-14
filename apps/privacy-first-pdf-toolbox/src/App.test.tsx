@@ -120,6 +120,7 @@ describe('App', () => {
 
     expect(screen.getByText('Files are processed in this browser tab, not uploaded to a server.')).toBeInTheDocument();
     expect(screen.getByText('Save destination: Downloads')).toBeInTheDocument();
+    expect(screen.getByLabelText('Save to Downloads folder')).toBeInTheDocument();
   });
 
   it('links users to the feedback issue form', () => {

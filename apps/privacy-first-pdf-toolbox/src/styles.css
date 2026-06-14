@@ -580,6 +580,12 @@ h2 {
   align-items: center;
 }
 
+.save-card-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .save-card p {
   margin: 5px 0 0;
   color: #63717a;
