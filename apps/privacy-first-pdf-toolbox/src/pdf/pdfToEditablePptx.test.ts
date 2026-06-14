@@ -56,5 +56,8 @@ describe('convertPdfToEditablePptx', () => {
     expect(slideXml).not.toContain('<a:srgbClr val="172026"><a:alpha val="0"/></a:srgbClr>');
     expect(slideXml).toContain('typeface="Arial"');
     expect(slideXml).not.toContain('g_d0_f1');
+
+    const textShapeMatch = slideXml?.match(/name="Text 1"[\s\S]*?<a:ext cx="(\d+)"/);
+    expect(Number(textShapeMatch?.[1])).toBeGreaterThan(3_900_000);
   });
 });

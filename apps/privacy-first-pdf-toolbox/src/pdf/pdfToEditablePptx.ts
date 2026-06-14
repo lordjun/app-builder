@@ -10,6 +10,7 @@ const MIN_TEXT_HEIGHT_INCHES = 0.12;
 const DEFAULT_TEXT_COLOR = '172026';
 const DEFAULT_RENDER_SCALE = 2;
 const TEXT_MASK_PADDING_INCHES = 0.01;
+const TEXT_BOX_WIDTH_SCALE = 1.18;
 
 export type PdfToEditablePptxOptions = {
   renderPageImage?: (page: PDFPageProxy, scale: number) => Promise<string>;
@@ -94,7 +95,7 @@ async function addPdfPageToDeck(pptx: PptxGenJS, page: PDFPageProxy, options: Pd
     const style = textContent.styles[item.fontName];
     const fontSize = Math.max(6, Math.abs(scaleY));
     const textBox = getTextBox(item, style, viewport.height, fontSize, x, y);
-    const width = Math.max(item.width / POINTS_PER_INCH, MIN_TEXT_WIDTH_INCHES);
+    const sourceTextWidth = Math.max(item.width / POINTS_PER_INCH, MIN_TEXT_WIDTH_INCHES);
     const rotation = Math.round(Math.atan2(skewY, scaleX) * (180 / Math.PI));
     const left = clamp(textBox.left, 0, slideWidth);
     const top = clamp(textBox.top, 0, slideHeight);
@@ -102,7 +103,7 @@ async function addPdfPageToDeck(pptx: PptxGenJS, page: PDFPageProxy, options: Pd
     slide.addShape('rect', {
       x: clamp(left - TEXT_MASK_PADDING_INCHES, 0, slideWidth),
       y: clamp(top - TEXT_MASK_PADDING_INCHES, 0, slideHeight),
-      w: Math.min(width + TEXT_MASK_PADDING_INCHES * 2, slideWidth - left),
+      w: Math.min(sourceTextWidth + TEXT_MASK_PADDING_INCHES * 2, slideWidth - left),
       h: Math.min(textBox.height + TEXT_MASK_PADDING_INCHES * 2, slideHeight - top),
       fill: { color: 'FFFFFF' },
       line: { color: 'FFFFFF', transparency: 100 },
@@ -112,7 +113,7 @@ async function addPdfPageToDeck(pptx: PptxGenJS, page: PDFPageProxy, options: Pd
     slide.addText(text, {
       x: left,
       y: top,
-      w: width,
+      w: Math.min(sourceTextWidth * TEXT_BOX_WIDTH_SCALE, slideWidth - left),
       h: textBox.height,
       color: DEFAULT_TEXT_COLOR,
       fontFace: mapPdfFontToOfficeFont(item.fontName, style),
