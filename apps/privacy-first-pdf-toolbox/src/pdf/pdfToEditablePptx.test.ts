@@ -41,7 +41,7 @@ describe('convertPdfToEditablePptx', () => {
     });
   });
 
-  it('preserves page appearance with a rendered PDF background and maps internal PDF fonts to office fonts', async () => {
+  it('preserves page appearance with a background while making replacement text visible and editable', async () => {
     const file = new File(['pdf'], 'application.pdf', { type: 'application/pdf' });
 
     const result = await convertPdfToEditablePptx(file, {
@@ -51,7 +51,9 @@ describe('convertPdfToEditablePptx', () => {
     const slideXml = await pptx.file('ppt/slides/slide1.xml')?.async('string');
 
     expect(slideXml).toContain('<a:blip');
-    expect(slideXml).toContain('<a:alpha val="0"/>');
+    expect(slideXml).toContain('<a:srgbClr val="FFFFFF"/>');
+    expect(slideXml).toContain('<a:srgbClr val="172026"/></a:solidFill>');
+    expect(slideXml).not.toContain('<a:srgbClr val="172026"><a:alpha val="0"/></a:srgbClr>');
     expect(slideXml).toContain('typeface="Arial"');
     expect(slideXml).not.toContain('g_d0_f1');
   });

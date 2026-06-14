@@ -9,7 +9,7 @@ const MIN_TEXT_WIDTH_INCHES = 0.35;
 const MIN_TEXT_HEIGHT_INCHES = 0.12;
 const DEFAULT_TEXT_COLOR = '172026';
 const DEFAULT_RENDER_SCALE = 2;
-const EDITABLE_TEXT_TRANSPARENCY = 100;
+const TEXT_MASK_PADDING_INCHES = 0.01;
 
 export type PdfToEditablePptxOptions = {
   renderPageImage?: (page: PDFPageProxy, scale: number) => Promise<string>;
@@ -96,10 +96,22 @@ async function addPdfPageToDeck(pptx: PptxGenJS, page: PDFPageProxy, options: Pd
     const textBox = getTextBox(item, style, viewport.height, fontSize, x, y);
     const width = Math.max(item.width / POINTS_PER_INCH, MIN_TEXT_WIDTH_INCHES);
     const rotation = Math.round(Math.atan2(skewY, scaleX) * (180 / Math.PI));
+    const left = clamp(textBox.left, 0, slideWidth);
+    const top = clamp(textBox.top, 0, slideHeight);
+
+    slide.addShape('rect', {
+      x: clamp(left - TEXT_MASK_PADDING_INCHES, 0, slideWidth),
+      y: clamp(top - TEXT_MASK_PADDING_INCHES, 0, slideHeight),
+      w: Math.min(width + TEXT_MASK_PADDING_INCHES * 2, slideWidth - left),
+      h: Math.min(textBox.height + TEXT_MASK_PADDING_INCHES * 2, slideHeight - top),
+      fill: { color: 'FFFFFF' },
+      line: { color: 'FFFFFF', transparency: 100 },
+      rotate: rotation === 0 ? undefined : rotation,
+    });
 
     slide.addText(text, {
-      x: clamp(textBox.left, 0, slideWidth),
-      y: clamp(textBox.top, 0, slideHeight),
+      x: left,
+      y: top,
       w: width,
       h: textBox.height,
       color: DEFAULT_TEXT_COLOR,
@@ -109,7 +121,6 @@ async function addPdfPageToDeck(pptx: PptxGenJS, page: PDFPageProxy, options: Pd
       rotate: rotation === 0 ? undefined : rotation,
       breakLine: false,
       fit: 'shrink',
-      transparency: EDITABLE_TEXT_TRANSPARENCY,
     });
   }
 
