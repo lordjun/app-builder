@@ -51,6 +51,7 @@ describe('convertPdfToEditablePptx', () => {
     const slideXml = await pptx.file('ppt/slides/slide1.xml')?.async('string');
 
     expect(slideXml).toContain('<a:blip');
+    expect(slideXml).toContain('<a:alpha val="0"/>');
     expect(slideXml).toContain('typeface="Arial"');
     expect(slideXml).not.toContain('g_d0_f1');
   });

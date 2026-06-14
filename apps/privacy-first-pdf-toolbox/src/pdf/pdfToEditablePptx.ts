@@ -9,7 +9,7 @@ const MIN_TEXT_WIDTH_INCHES = 0.35;
 const MIN_TEXT_HEIGHT_INCHES = 0.12;
 const DEFAULT_TEXT_COLOR = '172026';
 const DEFAULT_RENDER_SCALE = 2;
-const EDITABLE_TEXT_TRANSPARENCY = 25;
+const EDITABLE_TEXT_TRANSPARENCY = 100;
 
 export type PdfToEditablePptxOptions = {
   renderPageImage?: (page: PDFPageProxy, scale: number) => Promise<string>;
